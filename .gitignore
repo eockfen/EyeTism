@@ -129,7 +129,7 @@ dmypy.json
 .pyre/
 
 
-data/*.csv
+data/
 models/*.sav
 mlruns
 models/*
