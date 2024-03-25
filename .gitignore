@@ -136,3 +136,14 @@ models/*
 
 #config file has sensitive data
 .mlflow_uri
+
+#Mac
+.DS_Store
+._.DS_Store
+
+# word Backups
+~*.xlsx
+~*.docx
+
+# VS Code
+.vscode
