@@ -147,3 +147,6 @@ models/*
 
 # VS Code
 .vscode
+
+# individual
+ignore_this_folder
