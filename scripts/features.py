@@ -11,7 +11,7 @@ else:
 
 
 # --- here are the scan_path features calculated for a given file -------------
-def calculate_sp_features(sp_file):
+def calculate_sp_features(sp_file: str) -> pd.DataFrame:
     """calculate SCAN_PATH features for *.txt file
 
     Args:
@@ -81,7 +81,7 @@ def calculate_sp_features(sp_file):
 
 
 # --- main function to get scan_path features ---------------------------------
-def get_sp_features(who=None):
+def get_sp_features(who: str = None) -> pd.DataFrame:
     """_summary_
 
     Args:
@@ -118,15 +118,6 @@ if __name__ == "__main__":
         "ASD",
         "ASD_scanpath_1.txt",
     )
-    img_file = os.path.join(
-        curdir,
-        "..",
-        "data",
-        "Saliency4ASD",
-        "TrainingData",
-        "Images",
-        "1.png",
-    )
 
-    # extract_sp_features(sp_file, img_file)
-    get_sp_features(who="TD")
+    # get_sp_features(who="TD")
+    calculate_sp_features(sp_file=sp_file)

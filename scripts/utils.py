@@ -5,7 +5,7 @@ import pandas as pd
 import numpy as np
 
 
-def get_sp_files(who=None):
+def get_sp_files(who: str = None) -> str:
     """return ALL scanpath textfiles
 
     Returns:
@@ -19,13 +19,13 @@ def get_sp_files(who=None):
 
     if who is None:
         return sp_files_asd + sp_files_td
-    elif who == 'ASD':
+    elif who == "ASD":
         return sp_files_asd
-    elif who == 'TD':
+    elif who == "TD":
         return sp_files_td
 
 
-def get_img_of_sp(sp_file):
+def get_img_of_sp(sp_file: str) -> str:
     """return corresponding image for a given scanpath_*.txt file
 
     Args:
@@ -40,7 +40,7 @@ def get_img_of_sp(sp_file):
     return os.path.join(sp_dir, "..", "Images", f"{img_id}.png")
 
 
-def split_scanpaths(data):
+def split_scanpaths(data: pd.DataFrame) -> list:
     """splits concatenated scanpaths
 
     Args:
@@ -55,7 +55,7 @@ def split_scanpaths(data):
     return [data[start:end] for start, end in zip(starts, ends)]
 
 
-def load_scanpath(file):
+def load_scanpath(file: str) -> list:
     """load scanpath txt file and split individual scanpaths
 
     Args:
