@@ -10,6 +10,35 @@ else:
     import utils as ut
 
 
+# --- TEMPLATE 4 new features based on SCANPATH_*.txt fiels -------------------
+def calculate_XXX_features(sp_file: str) -> pd.DataFrame:
+    """calculate XXXXXXXXX features for *.txt file
+
+    Args:
+        sp_file (str): path to scanpath_*.txt
+
+    Returns:
+        DatFrame: pd.DatFrame containing calculated features
+    """
+    # instantiate df
+    df = None
+
+    # loop scanpaths
+    sps = ut.load_scanpath(sp_file)
+    for sp_i, sp in enumerate(sps):
+        # id
+        id = ut.get_sp_id(sp_file, sp_i)
+        df_XXX = pd.DataFrame(pd.Series(id), columns=["id"])
+
+        # -------- any features ------------------
+        df_XXX["dummy_feature_name"] = len(sp)
+
+        # concat to df
+        df = pd.concat([df, df_XXX], ignore_index=True)
+
+    return df
+
+
 # --- here are the scan_path features calculated for a given file -------------
 def calculate_sp_features(sp_file: str) -> pd.DataFrame:
     """calculate SCAN_PATH features for *.txt file
