@@ -30,14 +30,13 @@ def calculate_sp_features(sp_file: str) -> pd.DataFrame:
     # loop scanpaths
     sps = ut.load_scanpath(sp_file)
     for sp_i, sp in enumerate(sps):
-        # image id
-        id = int(img_file.split("/")[-1].split(".")[0])
-        df_sp = pd.DataFrame(pd.Series(id), columns=["img"])
+        # id
+        id = ut.get_sp_id(sp_file, sp_i)
+        df_sp = pd.DataFrame(pd.Series(id), columns=["id"])
 
-        # group
+        # instance identifiers
         df_sp["asd"] = 1 if "ASD" in sp_file.split("/")[-2] else 0
-
-        # scanpath index
+        df_sp["img"] = int(sp_file.split("_")[-1].split(".")[0])
         df_sp["sp_idx"] = sp_i
 
         # fix count
@@ -81,8 +80,9 @@ def calculate_sp_features(sp_file: str) -> pd.DataFrame:
 
 
 # --- main function to get scan_path features ---------------------------------
-def get_sp_features(who: str = None) -> pd.DataFrame:
-    """_summary_
+def get_features(who: str = None) -> pd.DataFrame:
+    """main function to get all the features. implement more functions here, if
+    you want to add more features, i.e. saliency, or object driven ones
 
     Args:
         who (str, optional): specify if only sub-group should be calculated. Defaults to None.
@@ -100,6 +100,12 @@ def get_sp_features(who: str = None) -> pd.DataFrame:
     for sp_file in sp_files:
         # extract features and concat to df
         df_file = calculate_sp_features(sp_file)
+
+        # TEMPLATE: extract XXXXX features
+        df_XXX = calculate_XXX_features(sp_file)
+        df_file = df_file.merge(df_XXX, on="id")
+
+        # concat file_df to complete_df
         df = pd.concat([df, df_file], ignore_index=True)
 
     return df
@@ -119,5 +125,5 @@ if __name__ == "__main__":
         "ASD_scanpath_1.txt",
     )
 
-    # get_sp_features(who="TD")
-    calculate_sp_features(sp_file=sp_file)
+    # df = get_features(who="TD")
+    # df = calculate_sp_features(sp_file=sp_file)
