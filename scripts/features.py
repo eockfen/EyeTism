@@ -42,11 +42,12 @@ def calculate_sp_features(sp_file: str) -> pd.DataFrame:
         # fix count
         df_sp["sp_fix_count"] = len(sp)
 
-        # total and mean duration
+        # total, mean and variance of duration
         df_sp["sp_fix_duration_ms_total"] = np.sum(sp["duration"])
         df_sp["sp_fix_duration_ms_mean"] = np.mean(sp["duration"])
+        df_sp["sp_fix_duration_ms_var"] = np.var(sp["duration"])
 
-        # total, mean, and median saccade amplitude
+        # total, mean and variance of saccade amplitude
         differences = np.diff(sp[["x", "y"]].values, axis=0)
         amplitudes = np.linalg.norm(differences, axis=1)
 
@@ -54,24 +55,24 @@ def calculate_sp_features(sp_file: str) -> pd.DataFrame:
         df_sp["sp_saccade_amplitude_px_mean"] = (
             np.mean(amplitudes) if len(amplitudes) else 0.0
         )
-        df_sp["sp_saccade_amplitude_px_median"] = (
-            np.median(amplitudes) if len(amplitudes) else 0.0
+        df_sp["sp_saccade_amplitude_px_var"] = (
+            np.var(amplitudes) if len(amplitudes) else 0.0
         )
 
-        # mean and median fixation distance to centre
+        # mean and variance of fixation distance to centre
         dist_2_centre = np.sqrt(
             (sp["x"] - image_size[1] / 2) ** 2 + (sp["y"] - image_size[0] / 2) ** 2
         )
 
         df_sp["sp_distance_to_centre_px_mean"] = np.mean(dist_2_centre)
-        df_sp["sp_distance_to_centre_px_median"] = np.median(dist_2_centre)
+        df_sp["sp_distance_to_centre_px_var"] = np.var(dist_2_centre)
 
         # mean and median fixation distance to mean fixation
         mean_x, mean_y = sp["x"].mean(), sp["y"].mean()
         dist_to_mean = np.sqrt((sp["x"] - mean_x) ** 2 + (sp["y"] - mean_y) ** 2)
 
         df_sp["sp_distance_to_sp_mean_px_mean"] = np.mean(dist_to_mean)
-        df_sp["sp_distance_to_sp_mean_px_median"] = np.median(dist_to_mean)
+        df_sp["sp_distance_to_sp_mean_px_var"] = np.var(dist_to_mean)
 
         # concat to df
         df = pd.concat([df, df_sp], ignore_index=True)
