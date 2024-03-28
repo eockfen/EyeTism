@@ -5,6 +5,21 @@ import pandas as pd
 import numpy as np
 
 
+def get_sp_id(sp_file: str, sp_i: int) -> str:
+    """get id for given scanpath file and scanpath_index
+
+    Args:
+        sp_file (str): path to scanpath_*.txt
+        sp_i (int): index of scanpath in this txt
+
+    Returns:
+        _type_: _description_
+    """
+    grp = 'asd' if "ASD" in sp_file.split("/")[-2] else 'td'
+    img_id = int(sp_file.split("_")[-1].split(".")[0])
+    return f"{grp}_{img_id:03.0f}_{sp_i:02.0f}"
+
+
 def get_sp_files(who: str = None) -> str:
     """return ALL scanpath textfiles
 
