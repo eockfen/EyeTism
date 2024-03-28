@@ -3,12 +3,14 @@ import os
 import pandas as pd
 import numpy as np
 from PIL import Image
+import mediapipe as mp
+from scipy import ndimage
+import json
 
 if __name__ != "__main__":
     from scripts import utils as ut
 else:
     import utils as ut
-
 
 # --- here are the scan_path features calculated for a given file -------------
 def calculate_sp_features(sp_file: str) -> pd.DataFrame:
@@ -78,6 +80,58 @@ def calculate_sp_features(sp_file: str) -> pd.DataFrame:
 
     return df
 
+# --- Object detection from image features -------------
+def detect objects(image_path):
+    mp_drawing = mp.solutions.drawing_utils
+    mp_objectron = mp.solutions.objectron
+
+    with mp_objectron.Objectron(static_image_mode=True) as objectron:
+        image = cv2.imread(image_path)
+        image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        results = objectron.process(image_rgb)
+
+        detected_objects = []
+        for detected_object in results.detected_objects:
+            object_name = detected_object.class_name
+            bounding_box = detected_object.bounding_box.flatten().tolist()
+            detected_objects.append({"object_name": object_name, "bounding_box": bounding_box})
+
+        return detected_objects
+
+# --- Here are image object based features calculated for a given file -------------
+def calculate_object_features():
+    # get files
+    sp_file = os.path.join(curdir, "..", "data", "Saliency4ASD", "TrainingData", "ASD", "ASD_scanpath_1.txt")
+    images = os.path.join(curdir, "data","Saliency4ASD", "TrainingData", "Images")
+    # instantiate df
+    df = None
+    extracted_features = []
+    mp_objectron = mp.solutions.objectron
+
+     # loop scanpaths
+    sps = ut.load_scanpath(sp_file)
+    for sp_i, sp in enumerate(sps):
+        # id
+        id = ut.get_sp_id(sp_file, sp_i)
+        df_sp = pd.DataFrame(pd.Series(id), columns=["id"])
+
+    images = load_images_from_folder(images_folder)
+    
+
+        for image, gaze_coords in zip(images, sps):
+            image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+            results = objectron.process(image_rgb)
+
+            if results.detected_objects:
+                for detected_object in results.detected_objects:
+                    bbox = detected_object.bounding_box
+
+                    if bbox[0].x < gaze_coords[0] < bbox[2].x and bbox[0].y < gaze_coords[1] < bbox[2].y:
+                        features = [...]  # Extract features here
+                        extracted_features.append(features)
+
+    extracted_features = np.array(extracted_features)
+
 
 # --- main function to get scan_path features ---------------------------------
 def get_features(who: str = None) -> pd.DataFrame:
@@ -92,9 +146,6 @@ def get_features(who: str = None) -> pd.DataFrame:
     """
     # get files
     sp_files = ut.get_sp_files(who)
-
-    # instantiate df
-    df = None
 
     # loop sp files
     for sp_file in sp_files:
