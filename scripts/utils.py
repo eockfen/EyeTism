@@ -3,7 +3,7 @@ import os
 import glob
 import pandas as pd
 import numpy as np
-from PIL import Image
+import imageio.v3 as iio
 
 
 def get_sp_id(sp_file: str, sp_i: int) -> str:
@@ -98,10 +98,8 @@ def load_saliency_map(sp_file: str, model: str) -> str:
     fname = os.path.basename(sp_file).split("_")[-1].split(".")[0]
     smap_file = os.path.join(path_smaps, model, f"{fname}.jpg")
 
-    # load + return image
-    img = Image.open(smap_file)
-    img.load()
-    return np.asarray(img).astype(float)
+    # load + return image as nparray
+    return iio.imread(smap_file).astype(float)
 
 
 if __name__ == "__main__":
