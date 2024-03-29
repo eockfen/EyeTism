@@ -2,7 +2,7 @@
 import os
 import pandas as pd
 import numpy as np
-from PIL import Image
+import imageio.v3 as iio
 
 if __name__ != "__main__":
     from scripts import utils as ut
@@ -54,7 +54,7 @@ def calculate_sp_features(sp_file: str) -> pd.DataFrame:
 
     # get size of image
     img_file = ut.get_img_of_sp(sp_file)
-    image_size = Image.open(img_file).size
+    image_size = iio.imread(img_file).shape
 
     # loop scanpaths
     sps = ut.load_scanpath(sp_file)
