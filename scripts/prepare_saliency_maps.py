@@ -88,8 +88,13 @@ def individual_fixation_maps(path_esm, redo: bool = False):
         # loop scanpaths
         sps = ut.load_scanpath(sp_file)
         for sp_i, sp in enumerate(sps):
-            # id
+            # file to write
             id = ut.get_sp_id(sp_file, sp_i)
+            ftw = os.path.join(path_esm, f"{id}.jpg")
+
+            # check if already done / or / redo==True
+            if os.path.isfile(ftw) and not redo:
+                continue
 
             # individual fixation map
             ifm = np.zeros(image_size)
@@ -99,8 +104,7 @@ def individual_fixation_maps(path_esm, redo: bool = False):
             # scale to interval [0 - 254]
             ifm = ifm / ifm.max() * 254
 
-            # file to write
-            ftw = os.path.join(path_esm, f"{id}.jpg")
+            # write
             iio.imwrite(ftw, ifm.astype(np.uint8))
 
 
