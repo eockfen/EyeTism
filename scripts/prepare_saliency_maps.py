@@ -98,7 +98,7 @@ def individual_fixation_maps(path_esm, redo: bool = False):
 
             # individual fixation map
             ifm = np.zeros(image_size)
-            ifm[(sp["y"].astype(int), sp["x"].astype(int))] = 1
+            ifm[(sp["y"].astype(int) - 1, sp["x"].astype(int) - 1)] = 1
             ndimage.gaussian_filter(ifm, sigma=43, output=ifm)
 
             # scale to interval [0 - 254]
