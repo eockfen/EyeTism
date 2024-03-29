@@ -2,11 +2,23 @@ import os
 import sys
 import glob
 import shutil
+import numpy as np
 from tqdm import tqdm
+from scipy import ndimage
+import imageio.v3 as iio
 from PIL import Image, ImageChops
+
+if __name__ != "__main__":
+    from scripts import utils as ut
+else:
+    import utils as ut
 
 
 def search_SAM_predictions(path_ref, path_pred, redo: bool = False):
+    # check folders
+    if not os.path.exists(path_pred):
+        os.makedirs(path_pred)
+
     # SAM paths + models
     path_SAM = os.path.join(curdir, "..", "data", "SAM_original")
     path_SAMimages = os.path.join(path_SAM, "images")
@@ -59,30 +71,66 @@ def search_SAM_predictions(path_ref, path_pred, redo: bool = False):
         return print("... something went wrong searching for SAM saliency maps")
 
 
+def individual_fixation_maps(path_esm, redo: bool = False):
+    # check folders
+    if not os.path.exists(path_esm):
+        os.makedirs(path_esm)
+
+    # get files
+    sp_files = ut.get_sp_files()
+
+    # loop sp files
+    for sp_file in tqdm(sp_files):
+        # get size of image
+        img_file = ut.get_img_of_sp(sp_file)
+        image_size = iio.imread(img_file).shape[0:2]
+
+        # loop scanpaths
+        sps = ut.load_scanpath(sp_file)
+        for sp_i, sp in enumerate(sps):
+            # id
+            id = ut.get_sp_id(sp_file, sp_i)
+
+            # individual fixation map
+            ifm = np.zeros(image_size)
+            ifm[(sp["y"].astype(int), sp["x"].astype(int))] = 1
+            ndimage.gaussian_filter(ifm, sigma=43, output=ifm)
+
+            # scale to interval [0 - 254]
+            ifm = ifm / ifm.max() * 254
+
+            # file to write
+            ftw = os.path.join(path_esm, f"{id}.jpg")
+            iio.imwrite(ftw, ifm.astype(np.uint8))
+
+
 if __name__ == "__main__":
     if len(sys.argv) == 1:
         raise NotImplementedError
     else:
+        # paths
         curdir = os.path.dirname(__file__)
-        path_data = os.path.join(curdir, "..", "data")
-        path_ref = os.path.join(path_data, "Saliency4ASD", "TrainingData", "Images")
-        path_predictions = os.path.join(curdir, "..", "saliency_predictions")
+        data = os.path.join(curdir, "..", "data")
+        ref_images = os.path.join(data, "Saliency4ASD", "TrainingData", "Images")
+        sal_predictions = os.path.join(curdir, "..", "saliency_predictions")
+        ifm = os.path.join(data, "Saliency4ASD", "TrainingData", "Individual_FixMaps")
 
-        match sys.argv[1]:
-            case "SAM":
-                # check args
-                redo = False
-                if len(sys.argv) > 2:
-                    match sys.argv[2]:
-                        case "0":
-                            redo = False
-                        case "1":
-                            redo = True
-                        case _:
-                            raise SyntaxError
+        # check args
+        redo = False
+        if len(sys.argv) > 2 and sys.argv[2] == "1":
+            redo = True
+
+        # do what have to be done
+        match sys.argv[1].upper():
+            case "SAM":  # Saliency Attentive Model
                 # run
                 print(" -> searching for SAM predictions")
-                search_SAM_predictions(path_ref, path_predictions, redo=redo)
+                search_SAM_predictions(ref_images, sal_predictions, redo=redo)
+
+            case "IFM":  # Individual Fixation Maps
+                # run
+                print(" -> creating individual fixation maps")
+                individual_fixation_maps(ifm, redo=redo)
 
             case _:
                 print(f"ERROR: argument '{sys.argv[0]}' not implemented")
