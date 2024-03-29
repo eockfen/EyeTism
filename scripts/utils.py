@@ -3,6 +3,7 @@ import os
 import glob
 import pandas as pd
 import numpy as np
+from PIL import Image
 
 
 def get_sp_id(sp_file: str, sp_i: int) -> str:
@@ -15,7 +16,7 @@ def get_sp_id(sp_file: str, sp_i: int) -> str:
     Returns:
         _type_: _description_
     """
-    grp = 'asd' if "ASD" in sp_file.split("/")[-2] else 'td'
+    grp = "asd" if "ASD" in sp_file.split("/")[-2] else "td"
     img_id = int(sp_file.split("_")[-1].split(".")[0])
     return f"{grp}_{img_id:03.0f}_{sp_i:02.0f}"
 
@@ -86,6 +87,21 @@ def load_scanpath(file: str) -> list:
 
     # split into separate scanpaths from individuals
     return split_scanpaths(sp)
+
+
+def load_saliency_map(sp_file: str, model: str) -> str:
+    # path
+    curdir = os.path.dirname(__file__)
+    path_smaps = os.path.join(curdir, "..", "saliency_predictions")
+
+    # convert sp -> smap
+    fname = os.path.basename(sp_file).split("_")[-1].split(".")[0]
+    smap_file = os.path.join(path_smaps, model, f"{fname}.jpg")
+
+    # load + return image
+    img = Image.open(smap_file)
+    img.load()
+    return np.asarray(img).astype(float)
 
 
 if __name__ == "__main__":
