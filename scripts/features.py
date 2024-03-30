@@ -137,7 +137,7 @@ def calculate_saliency_features(sp_file: str, mdl: str = "sam_resnet") -> pd.Dat
         # scanpath -> empirical saliency_map
         empirical_fix_map = np.zeros(image_size)
         empirical_fix_map[(sp["y"].astype(int) - 1, sp["x"].astype(int) - 1)] = 1
-        ndimage.gaussian_filter(empirical_fix_map, sigma=43, output=empirical_fix_map)
+        ndimage.gaussian_filter(empirical_fix_map, sigma=40, output=empirical_fix_map)
 
         # copy loaded salience map
         sal_map = loaded_sal_map.copy()
