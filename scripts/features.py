@@ -1,5 +1,6 @@
 # it's all about the features
 import os
+from tqdm import tqdm
 import pandas as pd
 import numpy as np
 import imageio.v3 as iio
@@ -209,7 +210,7 @@ def get_features(who: str = None, sal_mdl: str = "sam_resnet") -> pd.DataFrame:
     df = None
 
     # loop sp files
-    for sp_file in sp_files:
+    for sp_file in tqdm(sp_files):
         # extract features and concat to df
         df_file = calculate_sp_features(sp_file)
 
