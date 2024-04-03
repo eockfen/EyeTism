@@ -109,7 +109,7 @@ def load_saliency_map(sp_file: str, model: str) -> np.array:
 
     # convert sp -> smap
     fname = os.path.basename(sp_file).split("_")[-1].split(".")[0]
-    smap_file = os.path.join(path_smaps, model, f"{fname}.jpg")
+    smap_file = glob.glob(os.path.join(path_smaps, model, f"{fname}.*"))[0]
 
     # load + return image as nparray
     return iio.imread(smap_file).astype(float)
