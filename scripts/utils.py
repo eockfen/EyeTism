@@ -39,9 +39,9 @@ def get_sp_files(who: str = None) -> str:
 
     if who is None:
         return sp_files_asd + sp_files_td
-    elif who == "ASD":
+    elif who.upper() == "ASD":
         return sp_files_asd
-    elif who == "TD":
+    elif who.upper() == "TD":
         return sp_files_td
 
 

@@ -468,10 +468,10 @@ def get_features(
         df = pd.concat([df, df_file], ignore_index=True)
 
     # impute NaN's in object recognition features
-    obj_cols = [col for col in df.columns if 'obj_' in col]
+    obj_cols = [col for col in df.columns if "obj_" in col]
     for c in obj_cols:
         df[[c]] = df[[c]].fillna(value=0)
-    
+
     # return results
     return df
 
@@ -490,7 +490,10 @@ if __name__ == "__main__":
         "ASD_scanpath_1.txt",
     )
 
-    get_features()
+    # get_features()
+    # df = get_features(who="td", obj_save_fig=True, slc=[200, 300])
+    # path_df = os.path.join(curdir, "..", "data", "df_deepgaze2e_td_3.csv")
+    # df.to_csv(path_df)
     # calculate_sp_features(sp_file=sp_file)
     # calculate_saliency_features(sp_file=sp_file)
     # calculate_object_detection_features(sp_file=sp_file)
