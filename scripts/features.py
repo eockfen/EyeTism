@@ -462,6 +462,12 @@ def get_features(
         # concat file_df to complete_df
         df = pd.concat([df, df_file], ignore_index=True)
 
+    # impute NaN's in object recognition features
+    obj_cols = [col for col in df.columns if 'obj_' in col]
+    for c in obj_cols:
+        df[[c]] = df[[c]].fillna(value=0)
+    
+    # return results
     return df
 
 
