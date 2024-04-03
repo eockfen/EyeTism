@@ -371,7 +371,7 @@ def calculate_object_detection_features(
         if obj_save_fig:
             # create folder if not there
             curdir = os.path.dirname(__file__)
-            path_img = os.path.join(curdir, "..", "images", "obj_recog_results")
+            path_img = os.path.join(curdir, "..", "data", "obj_recog_results")
             if not os.path.exists(path_img):
                 os.makedirs(path_img)
 
@@ -409,16 +409,15 @@ def calculate_object_detection_features(
 
             # add fixations
             plt.plot(sp["x"], sp["y"], "+", color="k", mew=3, ms=40)
-            plt.plot(sp["x"], sp["y"], "o", color="w", mec="k", mew=1.5, ms=10)
+            plt.plot(sp["x"], sp["y"], "o", color="r", mec="k", mew=1.5, ms=10)
 
             # style
             plt.ylim(img.shape[0] - 1, 0)
             plt.xlim(0, img.shape[1] - 1)
             plt.tight_layout
-            plt.show(block=False)
 
             # save plot
-            plt.savefig(os.path.join(path_img, f"{id}.png"), dpi=150)
+            plt.savefig(os.path.join(path_img, f"{id}.png"), dpi=100)
             plt.close()
 
     return df
