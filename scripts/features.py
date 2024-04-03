@@ -425,7 +425,7 @@ def calculate_object_detection_features(
 
 # --- main function to get scan_path features ---------------------------------
 def get_features(
-    who: str = None, sal_mdl: str = "DeepGazeIIE", obj_save_fig: bool = False
+    who: str = None, sal_mdl: str = "DeepGazeIIE", obj_save_fig: bool = False, slc=None
 ) -> pd.DataFrame:
     """main function to get all the features. implement more functions here, if
     you want to add more features, i.e. saliency, or object driven ones
@@ -438,6 +438,11 @@ def get_features(
     """
     # get files
     sp_files = ut.get_sp_files(who)
+
+    # slice files
+    if slc is not None:
+        sp_files = sorted(sp_files)
+        sp_files = sp_files[slc[0]:slc[1]]
 
     # instantiate df
     df = None
