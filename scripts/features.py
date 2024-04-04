@@ -251,9 +251,6 @@ def is_animate(x):
 def calculate_object_detection_features(
     sp_file: str, obj_save_fig: bool = False
 ) -> pd.DataFrame:
-    # Load object & face detector
-    detector = get_object_detector_object()
-
     # ----- set rules for ignoring/changing certain detected objects ----------
     detections_ignore = {
         52: ["bed"],
@@ -272,13 +269,14 @@ def calculate_object_detection_features(
     img_nr = int(sp_file.split("_")[-1].split(".")[0])
     img_file = ut.get_img_of_sp(sp_file)
 
-    # Load the input image
+    # load the input image
     image = mp.Image.create_from_file(img_file)
 
-    # Detect objects in the input image
+    # load object detector & detect
+    detector = get_object_detector_object()
     detection_result = detector.detect(image)
 
-    # Detect faces
+    # detect faces
     fr_image = face_recognition.load_image_file(img_file)
     face_locations = face_recognition.face_locations(fr_image, model="cnn")
 
@@ -303,7 +301,7 @@ def calculate_object_detection_features(
         # keep track of background fixations
         flag_fix_face = [False] * len(sp)
 
-        # Process faces in the images
+        # ----- Process faces in the images ----------
         df_obj["obj_n_fix_face"] = 0
         df_obj["obj_t_abs_on_face"] = 0
         df_obj["obj_t_rel_on_face"] = 0
@@ -337,7 +335,7 @@ def calculate_object_detection_features(
         # calc relative time on faces
         df_obj["obj_t_rel_on_face"] = df_obj["obj_t_abs_on_face"] / sp["duration"].sum()
 
-        # Process the detection result and extract rectangle coordinates
+        # ----- Process the detected objects ----------
         df_obj["obj_n_fix_animate"] = 0
         df_obj["obj_n_fix_inanimate"] = 0
         df_obj["obj_n_fix_background"] = 0
@@ -348,6 +346,7 @@ def calculate_object_detection_features(
         df_obj["obj_t_rel_on_inanimate"] = 0
         df_obj["obj_t_rel_on_background"] = 0
 
+        # loop fixations
         for _, fix in sp.iterrows():
             # flag-list to skip 'p' if have been found on this kind of object
             on_object = []
@@ -421,10 +420,10 @@ def calculate_object_detection_features(
                 ]
             )
 
-        # Concatenate to main DataFrame
+        # ----- Concatenate to main DataFrame ----------
         df = pd.concat([df, df_obj], ignore_index=True)
 
-        # save resulting figure to "images/obj_recog_results/"
+        # ----- save figure to "images/obj_recog_results/" ----------
         if obj_save_fig:
             # create folder if not there
             curdir = os.path.dirname(__file__)
