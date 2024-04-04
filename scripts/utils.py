@@ -39,9 +39,9 @@ def get_sp_files(who: str = None) -> str:
 
     if who is None:
         return sp_files_asd + sp_files_td
-    elif who == "ASD":
+    elif who.upper() == "ASD":
         return sp_files_asd
-    elif who == "TD":
+    elif who.upper() == "TD":
         return sp_files_td
 
 
@@ -109,7 +109,7 @@ def load_saliency_map(sp_file: str, model: str) -> np.array:
 
     # convert sp -> smap
     fname = os.path.basename(sp_file).split("_")[-1].split(".")[0]
-    smap_file = os.path.join(path_smaps, model, f"{fname}.jpg")
+    smap_file = glob.glob(os.path.join(path_smaps, model, f"{fname}.*"))[0]
 
     # load + return image as nparray
     return iio.imread(smap_file).astype(float)
