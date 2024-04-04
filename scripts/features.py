@@ -279,7 +279,8 @@ def calculate_object_detection_features(
 
         # Process faces in the images
         df_obj["obj_n_fix_face"] = 0
-        df_obj["obj_t_on_face"] = 0
+        df_obj["obj_t_abs_on_face"] = 0
+        df_obj["obj_t_rel_on_face"] = 0
 
         for _, p in sp.iterrows():
             # flag to skip 'p' if have been found on a face
@@ -298,25 +299,31 @@ def calculate_object_detection_features(
                 ):
                     # update faces
                     df_obj["obj_n_fix_face"] += 1
-                    df_obj["obj_t_on_face"] += p["duration"]
+                    df_obj["obj_t_abs_on_face"] += p["duration"]
 
                     # set flag to indicate that this 'p' was on a face already
                     on_face = True
 
+        # calc relative time on faces
+        df_obj["obj_t_rel_on_face"] = df_obj["obj_t_abs_on_face"] / sp["duration"].sum()
+
         # Process the detection result and extract rectangle coordinates
         df_obj["obj_n_fix_animate"] = 0
-        df_obj["obj_t_on_animate"] = 0
         df_obj["obj_n_fix_inanimate"] = 0
-        df_obj["obj_t_on_inanimate"] = 0
         df_obj["obj_n_fix_background"] = 0
-        df_obj["obj_t_on_background"] = 0
+        df_obj["obj_t_abs_on_animate"] = 0
+        df_obj["obj_t_abs_on_inanimate"] = 0
+        df_obj["obj_t_abs_on_background"] = 0
+        df_obj["obj_t_rel_on_animate"] = 0
+        df_obj["obj_t_rel_on_inanimate"] = 0
+        df_obj["obj_t_rel_on_background"] = 0
 
         for _, p in sp.iterrows():
             # flag-list to skip 'p' if have been found on this kind of object
             on_object = []
 
             # loop detected objects
-            for _, detection in enumerate(detection_result.detections):
+            for detection in detection_result.detections:
                 # prepare bbox
                 obj_name = detection.categories[0].category_name
                 bbox_coords = [
@@ -326,27 +333,27 @@ def calculate_object_detection_features(
                     detection.bounding_box.height,
                 ]
 
+                # create 'object' column if not done previously
+                if f"obj_n_fix_{obj_name}_obj" not in df_obj.columns:
+                    df_obj[f"obj_n_fix_{obj_name}_obj"] = 0
+                    df_obj[f"obj_t_abs_on_{obj_name}_obj"] = 0
+
                 # check if fix inside bbox
                 if (
                     intersect(bbox_coords, [int(p["x"]), int(p["y"]), 1, 1])
                     and obj_name not in on_object
                 ):
-                    # create 'object' column if not done previously
-                    if f"obj_n_fix_{obj_name}" not in df_obj.columns:
-                        df_obj[f"obj_n_fix_{obj_name}"] = 0
-                        df_obj[f"obj_t_on_{obj_name}"] = 0
-
                     # update object
-                    df_obj[f"obj_n_fix_{obj_name}"] += 1
-                    df_obj[f"obj_t_on_{obj_name}"] += p["duration"]
+                    df_obj[f"obj_n_fix_{obj_name}_obj"] += 1
+                    df_obj[f"obj_t_abs_on_{obj_name}_obj"] += p["duration"]
 
                     # update animate / inanimate
                     if is_animate(obj_name):
                         df_obj["obj_n_fix_animate"] += 1
-                        df_obj["obj_t_on_animate"] += p["duration"]
+                        df_obj["obj_t_abs_on_animate"] += p["duration"]
                     else:
                         df_obj["obj_n_fix_inanimate"] += 1
-                        df_obj["obj_t_on_inanimate"] += p["duration"]
+                        df_obj["obj_t_abs_on_inanimate"] += p["duration"]
 
                     # set flag-list
                     on_object.append(obj_name)
@@ -358,11 +365,27 @@ def calculate_object_detection_features(
                     - df_obj.loc[0, "obj_n_fix_animate"]
                     - df_obj.loc[0, "obj_n_fix_inanimate"]
                 )
-                df_obj["obj_t_on_background"] = (
+                df_obj["obj_t_abs_on_background"] = (
                     sp["duration"].sum()
-                    - df_obj.loc[0, "obj_t_on_animate"]
-                    - df_obj.loc[0, "obj_n_fix_inanimate"]
+                    - df_obj.loc[0, "obj_t_abs_on_animate"]
+                    - df_obj.loc[0, "obj_t_abs_on_inanimate"]
                 )
+
+        # calc relative time on "categories"
+        df_obj["obj_t_rel_on_animate"] = (
+            df_obj["obj_t_abs_on_animate"] / sp["duration"].sum()
+        )
+        df_obj["obj_t_rel_on_inanimate"] = (
+            df_obj["obj_t_abs_on_inanimate"] / sp["duration"].sum()
+        )
+        df_obj["obj_t_rel_on_background"] = (
+            df_obj["obj_t_abs_on_background"] / sp["duration"].sum()
+        )
+        for detection in detection_result.detections:
+            obj_name = detection.categories[0].category_name
+            df_obj[f"obj_t_rel_on_{obj_name}_obj"] = (
+                df_obj[f"obj_t_abs_on_{obj_name}_obj"] / sp["duration"].sum()
+            )
 
         # Concatenate to main DataFrame
         df = pd.concat([df, df_obj], ignore_index=True)
@@ -442,7 +465,7 @@ def get_features(
     # slice files
     if slc is not None:
         sp_files = sorted(sp_files)
-        sp_files = sp_files[slc[0]:slc[1]]
+        sp_files = sp_files[slice(slc[0], slc[1])]
 
     # instantiate df
     df = None
@@ -491,9 +514,15 @@ if __name__ == "__main__":
     )
 
     # get_features()
-    # df = get_features(who="td", obj_save_fig=True, slc=[200, 300])
+
+    # df = get_features(who="td", sal_mdl="sam_resnet")
+    # path_df = os.path.join(curdir, "..", "data", "df_sam_resnet_td.csv")
+    # df.to_csv(path_df)
+
+    # df = get_features(who="td", obj_save_fig=True, slc=[0, 10])
     # path_df = os.path.join(curdir, "..", "data", "df_deepgaze2e_td_3.csv")
     # df.to_csv(path_df)
+
     # calculate_sp_features(sp_file=sp_file)
     # calculate_saliency_features(sp_file=sp_file)
     # calculate_object_detection_features(sp_file=sp_file)
