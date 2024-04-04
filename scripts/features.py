@@ -402,19 +402,23 @@ def calculate_object_detection_features(
                 df_obj["obj_t_abs_on_background"] += fix["duration"]
 
         # calc relative time on "categories"
-        df_obj["obj_t_rel_on_animate"] = (
-            df_obj["obj_t_abs_on_animate"] / sp["duration"].sum()
+        df_obj["obj_t_rel_on_animate"] = min(
+            [df_obj.loc[0, "obj_t_abs_on_animate"] / sp["duration"].sum(), 1]
         )
-        df_obj["obj_t_rel_on_inanimate"] = (
-            df_obj["obj_t_abs_on_inanimate"] / sp["duration"].sum()
+        df_obj["obj_t_rel_on_inanimate"] = min(
+            [df_obj.loc[0, "obj_t_abs_on_inanimate"] / sp["duration"].sum(), 1]
         )
-        df_obj["obj_t_rel_on_background"] = (
-            df_obj["obj_t_abs_on_background"] / sp["duration"].sum()
+        df_obj["obj_t_rel_on_background"] = min(
+            [df_obj.loc[0, "obj_t_abs_on_background"] / sp["duration"].sum(), 1]
         )
         for detection in detection_result.detections:
             obj_name = detection.categories[0].category_name
-            df_obj[f"obj_t_rel_on_{obj_name}_obj"] = (
-                df_obj[f"obj_t_abs_on_{obj_name}_obj"] / sp["duration"].sum()
+            df_obj[f"obj_t_rel_on_{obj_name}_obj"] = min(
+                [
+                    df_obj.loc[0, f"obj_t_abs_on_{obj_name}_obj"]
+                    / sp["duration"].sum(),
+                    1,
+                ]
             )
 
         # Concatenate to main DataFrame
