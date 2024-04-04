@@ -282,7 +282,8 @@ def calculate_object_detection_features(
         df_obj["obj_t_abs_on_face"] = 0
         df_obj["obj_t_rel_on_face"] = 0
 
-        for _, p in sp.iterrows():
+        # Loop fixations
+        for _, fix in sp.iterrows():
             # flag to skip 'p' if have been found on a face
             on_face = False
 
@@ -294,12 +295,12 @@ def calculate_object_detection_features(
 
                 # check if fix inside bbox
                 if (
-                    intersect(bbox_coords, [int(p["x"]), int(p["y"]), 1, 1])
+                    intersect(bbox_coords, [int(fix["x"]), int(fix["y"]), 1, 1])
                     and not on_face
                 ):
                     # update faces
                     df_obj["obj_n_fix_face"] += 1
-                    df_obj["obj_t_abs_on_face"] += p["duration"]
+                    df_obj["obj_t_abs_on_face"] += fix["duration"]
 
                     # set flag to indicate that this 'p' was on a face already
                     on_face = True
@@ -318,7 +319,7 @@ def calculate_object_detection_features(
         df_obj["obj_t_rel_on_inanimate"] = 0
         df_obj["obj_t_rel_on_background"] = 0
 
-        for _, p in sp.iterrows():
+        for _, fix in sp.iterrows():
             # flag-list to skip 'p' if have been found on this kind of object
             on_object = []
 
@@ -340,20 +341,20 @@ def calculate_object_detection_features(
 
                 # check if fix inside bbox
                 if (
-                    intersect(bbox_coords, [int(p["x"]), int(p["y"]), 1, 1])
+                    intersect(bbox_coords, [int(fix["x"]), int(fix["y"]), 1, 1])
                     and obj_name not in on_object
                 ):
                     # update object
                     df_obj[f"obj_n_fix_{obj_name}_obj"] += 1
-                    df_obj[f"obj_t_abs_on_{obj_name}_obj"] += p["duration"]
+                    df_obj[f"obj_t_abs_on_{obj_name}_obj"] += fix["duration"]
 
                     # update animate / inanimate
                     if is_animate(obj_name):
                         df_obj["obj_n_fix_animate"] += 1
-                        df_obj["obj_t_abs_on_animate"] += p["duration"]
+                        df_obj["obj_t_abs_on_animate"] += fix["duration"]
                     else:
                         df_obj["obj_n_fix_inanimate"] += 1
-                        df_obj["obj_t_abs_on_inanimate"] += p["duration"]
+                        df_obj["obj_t_abs_on_inanimate"] += fix["duration"]
 
                     # set flag-list
                     on_object.append(obj_name)
