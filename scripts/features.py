@@ -270,7 +270,18 @@ def calculate_object_detection_features(
     fr_image = face_recognition.load_image_file(img_file)
     face_locations = face_recognition.face_locations(fr_image, model="cnn")
 
-    # Loop through scanpaths
+    # write scores of detected objects
+    curdir = os.path.dirname(__file__)
+    for _, detection in enumerate(detection_result.detections):
+        _img = img_file.split("/")[-1]
+        obj_name = detection.categories[0].category_name
+        obj_score = detection.categories[0].score
+        with open(
+            os.path.join(curdir, "..", "data", "obj_recog_scores.txt"), "a+"
+        ) as file:
+            file.write(f"\n{_img} {obj_name} {obj_score}")
+
+    # ----- loop through scanpaths ----------
     sps = ut.load_scanpath(sp_file)
     for sp_i, sp in enumerate(sps):
         # id
@@ -468,6 +479,10 @@ def get_features(
 
     # instantiate df
     df = None
+
+    # delete obj_recog_scores.txt
+    if os.path.exists(os.path.join(curdir, "..", "data", "obj_recog_scores.txt")):
+        os.remove(os.path.join(curdir, "..", "data", "obj_recog_scores.txt"))
 
     # loop sp files
     for sp_file in tqdm(sp_files):
