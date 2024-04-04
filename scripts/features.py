@@ -450,7 +450,9 @@ def calculate_object_detection_features(
 
             # add objects
             for _, detection in enumerate(detection_result.detections):
+                # name & score
                 obj_name = detection.categories[0].category_name
+                obj_score = detection.categories[0].score
 
                 # handle exception rules
                 if img_nr in detections_ignore.keys():
@@ -459,6 +461,8 @@ def calculate_object_detection_features(
                 if img_nr in detections_change.keys():
                     if obj_name in detections_change[img_nr].keys():
                         obj_name = detections_change[img_nr][obj_name]
+
+                # add rectangle
                 rect = patches.Rectangle(
                     (detection.bounding_box.origin_x, detection.bounding_box.origin_y),
                     detection.bounding_box.width,
@@ -468,6 +472,17 @@ def calculate_object_detection_features(
                     facecolor="none",
                 )
                 ax.add_patch(rect)
+
+                # add label
+                txt = f"'{obj_name}' at {obj_score*100:.2f}%"
+                plt.text(
+                    detection.bounding_box.origin_x,
+                    detection.bounding_box.origin_y,
+                    txt,
+                    fontweight="bold",
+                    backgroundcolor="orange",
+                    verticalalignment="top",
+                )
 
             # add fixations
             plt.plot(sp["x"], sp["y"], "+", color="k", mew=3, ms=40)
