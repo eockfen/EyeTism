@@ -432,7 +432,7 @@ def calculate_object_detection_features(
 
             # add fixations
             plt.plot(sp["x"], sp["y"], "+", color="k", mew=3, ms=40)
-            plt.plot(sp["x"], sp["y"], "o", color="r", mec="k", mew=1.5, ms=10)
+            plt.plot(sp["x"], sp["y"], "o", color="w", mec="r", mew=1.5, ms=10)
 
             # style
             plt.ylim(img.shape[0] - 1, 0)
