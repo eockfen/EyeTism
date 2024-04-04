@@ -277,6 +277,9 @@ def calculate_object_detection_features(
         id = ut.get_sp_id(sp_file, sp_i)
         df_obj = pd.DataFrame(pd.Series(id), columns=["id"])
 
+        # keep track of background fixations
+        flag_fix_face = [False] * len(sp)
+
         # Process faces in the images
         df_obj["obj_n_fix_face"] = 0
         df_obj["obj_t_abs_on_face"] = 0
@@ -301,6 +304,9 @@ def calculate_object_detection_features(
                     # update faces
                     df_obj["obj_n_fix_face"] += 1
                     df_obj["obj_t_abs_on_face"] += fix["duration"]
+
+                    # update flag: fix_on_face
+                    flag_fix_face[fix["idx"]] = True
 
                     # set flag to indicate that this 'p' was on a face already
                     on_face = True
@@ -359,18 +365,11 @@ def calculate_object_detection_features(
                     # set flag-list
                     on_object.append(obj_name)
 
-            # if still on no object -> background
-            if on_object == []:
-                df_obj["obj_n_fix_background"] = (
-                    len(sp)
-                    - df_obj.loc[0, "obj_n_fix_animate"]
-                    - df_obj.loc[0, "obj_n_fix_inanimate"]
-                )
-                df_obj["obj_t_abs_on_background"] = (
-                    sp["duration"].sum()
-                    - df_obj.loc[0, "obj_t_abs_on_animate"]
-                    - df_obj.loc[0, "obj_t_abs_on_inanimate"]
-                )
+            # check if fixation not on OBJECT nor FACE -> background
+            if on_object == [] and not flag_fix_face[fix["idx"]]:
+                print(f"{id} : background at {fix['x']} / {fix['y']}")
+                df_obj["obj_n_fix_background"] += 1
+                df_obj["obj_t_abs_on_background"] += fix["duration"]
 
         # calc relative time on "categories"
         df_obj["obj_t_rel_on_animate"] = (
