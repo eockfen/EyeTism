@@ -412,6 +412,15 @@ def calculate_object_detection_features(
         )
         for detection in detection_result.detections:
             obj_name = detection.categories[0].category_name
+
+            # handle exceptions
+            if img_nr in detections_ignore.keys():
+                if obj_name in detections_ignore[img_nr]:
+                    continue
+            if img_nr in detections_change.keys():
+                if obj_name in detections_change[img_nr].keys():
+                    obj_name = detections_change[img_nr][obj_name]
+
             df_obj[f"obj_t_rel_on_{obj_name}_obj"] = min(
                 [
                     df_obj.loc[0, f"obj_t_abs_on_{obj_name}_obj"]
@@ -528,6 +537,7 @@ def get_features(
     df = None
 
     # delete obj_recog_scores.txt
+    curdir = os.path.dirname(__file__)
     if os.path.exists(os.path.join(curdir, "..", "data", "obj_recog_scores.txt")):
         os.remove(os.path.join(curdir, "..", "data", "obj_recog_scores.txt"))
 
