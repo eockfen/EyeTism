@@ -367,7 +367,6 @@ def calculate_object_detection_features(
 
             # check if fixation not on OBJECT nor FACE -> background
             if on_object == [] and not flag_fix_face[fix["idx"]]:
-                print(f"{id} : background at {fix['x']} / {fix['y']}")
                 df_obj["obj_n_fix_background"] += 1
                 df_obj["obj_t_abs_on_background"] += fix["duration"]
 
