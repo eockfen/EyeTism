@@ -254,10 +254,22 @@ def calculate_object_detection_features(
     # Load object & face detector
     detector = get_object_detector_object()
 
-    # Instantiate DataFrame
+    # ----- set rules for ignoring/changing certain detected objects ----------
+    detections_ignore = {
+        52: ["bed"],
+        55: ["person"],
+        66: ["dog"],
+        84: ["person"],
+        159: ["person"],
+        289: ["horse"],
+    }
+    detections_change = {180: {"chair": "cat"}}
+
+    # instantiate DataFrame
     df = None
 
     # image to scanpath
+    img_nr = int(sp_file.split("_")[-1].split(".")[0])
     img_file = ut.get_img_of_sp(sp_file)
 
     # Load the input image
@@ -351,6 +363,14 @@ def calculate_object_detection_features(
                     detection.bounding_box.height,
                 ]
 
+                # handle exception rules
+                if img_nr in detections_ignore.keys():
+                    if obj_name in detections_ignore[img_nr]:
+                        continue
+                if img_nr in detections_change.keys():
+                    if obj_name in detections_change[img_nr].keys():
+                        obj_name = detections_change[img_nr][obj_name]
+
                 # create 'object' column if not done previously
                 if f"obj_n_fix_{obj_name}_obj" not in df_obj.columns:
                     df_obj[f"obj_n_fix_{obj_name}_obj"] = 0
@@ -430,6 +450,15 @@ def calculate_object_detection_features(
 
             # add objects
             for _, detection in enumerate(detection_result.detections):
+                obj_name = detection.categories[0].category_name
+
+                # handle exception rules
+                if img_nr in detections_ignore.keys():
+                    if obj_name in detections_ignore[img_nr]:
+                        continue
+                if img_nr in detections_change.keys():
+                    if obj_name in detections_change[img_nr].keys():
+                        obj_name = detections_change[img_nr][obj_name]
                 rect = patches.Rectangle(
                     (detection.bounding_box.origin_x, detection.bounding_box.origin_y),
                     detection.bounding_box.width,
