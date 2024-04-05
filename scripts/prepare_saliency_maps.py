@@ -7,11 +7,102 @@ from tqdm import tqdm
 from scipy import ndimage
 import imageio.v3 as iio
 from PIL import Image, ImageChops
+import matplotlib.pyplot as plt
+
+import torch
+from scipy.special import logsumexp
+import deepgaze_pytorch
 
 if __name__ != "__main__":
     from scripts import utils as ut
 else:
     import utils as ut
+
+
+def deepgaze(path_ref, path_pred, redo: bool = False, disp: bool = False):
+    def normalize_log_density(log_density):
+        """convertes a log density into a map of the cummulative distribution function."""
+        density = np.exp(log_density)
+        flat_density = density.flatten()
+        inds = flat_density.argsort()[::-1]
+        sorted_density = flat_density[inds]
+        cummulative = np.cumsum(sorted_density)
+        unsorted_cummulative = cummulative[np.argsort(inds)]
+        return unsorted_cummulative.reshape(log_density.shape)
+
+    def visualize_distribution(log_densities, ax=None):
+        if ax is None:
+            ax = plt.gca()
+        t = normalize_log_density(log_densities)
+        img = ax.imshow(t, cmap=plt.cm.viridis)
+        levels = [0, 0.25, 0.5, 0.75, 1.0]
+        cs = ax.contour(t, levels=levels, colors="black")
+        # plt.clabel(cs)
+
+        return img, cs
+
+    # ------------------------------------------------------
+    # check folders
+    if not os.path.exists(path_pred):
+        os.makedirs(path_pred)
+
+    # load precomputed centerbias log density (from MIT1003) over a 1024x1024 image
+    centerbias_template = np.load(
+        os.path.join(curdir, "deepgaze_pytorch", "centerbias_mit1003.npy")
+    )
+
+    # loop referrence images
+    refImages = glob.glob(os.path.join(path_ref, "*.png"))
+    for img_file in tqdm(refImages):
+        # load image
+        image = iio.imread(img_file)
+
+        # instantiate model
+        DEVICE = None
+        model = deepgaze_pytorch.DeepGazeIIE(pretrained=True).to(DEVICE)
+
+        # rescale to match image size
+        centerbias = ndimage.zoom(
+            centerbias_template,
+            (
+                image.shape[0] / centerbias_template.shape[0],
+                image.shape[1] / centerbias_template.shape[1],
+            ),
+            order=0,
+            mode="nearest",
+        )
+
+        # renormalize log density / create tensors / predict
+        centerbias -= logsumexp(centerbias)
+        image_tensor = torch.tensor([image.transpose(2, 0, 1)]).to(DEVICE)
+        centerbias_tensor = torch.tensor([centerbias]).to(DEVICE)
+        log_density_prediction = model(image_tensor, centerbias_tensor)
+
+        # convert log-densitiy-maps to greyscale image
+        smap = 1 - normalize_log_density(
+            log_density_prediction.detach().cpu().numpy()[0, 0]
+        )
+        smap *= 254
+
+        # write
+        iio.imwrite(
+            os.path.join(path_pred, os.path.basename(img_file)), smap.astype(np.uint8)
+        )
+
+        # plotting
+        if disp:
+            _, axs = plt.subplots(nrows=1, ncols=3, figsize=(12, 3))
+            # plt.set_cmap('Greys_r')
+            axs[0].imshow(image)
+            axs[0].set_axis_off()
+            plt.set_cmap("Greys_r")
+            axs[1].matshow(log_density_prediction.detach().cpu().numpy()[0, 0])
+            axs[1].set_axis_off()
+            visualize_distribution(
+                log_density_prediction.detach().cpu().numpy()[0, 0], ax=axs[2]
+            )
+            axs[2].set_axis_off()
+            plt.show()
 
 
 def search_SAM_predictions(path_ref, path_pred, redo: bool = False):
@@ -117,6 +208,7 @@ if __name__ == "__main__":
         data = os.path.join(curdir, "..", "data")
         ref_images = os.path.join(data, "Saliency4ASD", "TrainingData", "Images")
         sal_predictions = os.path.join(curdir, "..", "saliency_predictions")
+        sal_pred_deepgaze = os.path.join(sal_predictions, "DeepGazeIIE")
         ifm = os.path.join(data, "Saliency4ASD", "TrainingData", "Individual_FixMaps")
 
         # check args
@@ -136,6 +228,11 @@ if __name__ == "__main__":
                 print(" -> creating individual fixation maps")
                 individual_fixation_maps(ifm, redo=redo)
 
+            case "DG":  # DeepGaze IIE saliency maps
+                # run
+                print(" -> predict saliency maps via DeepGaze IIE")
+                deepgaze(ref_images, sal_pred_deepgaze, redo=redo)
+
             case _:
-                print(f"ERROR: argument '{sys.argv[0]}' not implemented")
+                print(f"ERROR: argument '{sys.argv[1]}' not implemented")
                 raise NotImplementedError

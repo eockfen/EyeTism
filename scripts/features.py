@@ -1,11 +1,10 @@
 # it's all about the features
 import os
+from tqdm import tqdm
 import pandas as pd
 import numpy as np
 import imageio.v3 as iio
 from scipy import ndimage
-import mediapipe as mp
-
 
 if __name__ != "__main__":
     from scripts import utils as ut
@@ -192,107 +191,11 @@ def calculate_saliency_features(sp_file: str, mdl: str = "sam_resnet") -> pd.Dat
 
     return df
 
-# --- object detection features based on SCANPATH_*.txt files and images -------------------
-# Create an ObjectDetector object.
-def get_object_detector_object():   
-    base_options = python.BaseOptions(model_path = "/../models/efficientdet.tflite")
-    options = vision.ObjectDetectorOptions(base_options=base_options,
-                                       score_threshold=0.5)
-    detector = vision.ObjectDetector.create_from_options(options)
-    return detector
-
-# Check for intersection of object bounding box and scanpath coordinates   
-def intersect(rect1, rect2):
-    x1, y1, w1, h1 = rect1
-    x2, y2, w2, h2 = rect2
-    
-    # Calculate intersection coordinates
-    x_left = max(x1, x2)
-    y_top = max(y1, y2)
-    x_right = min(x1 + w1, x2 + w2)
-    y_bottom = min(y1 + h1, y2 + h2)
-    
-    # Check if there is an intersection
-    if x_right >= x_left and y_bottom >= y_top:
-        return [x_left, y_top, x_right - x_left, y_bottom - y_top]
-    else:
-        return []
-    
-# Extract features (number of object fixations and time on objects)
-def extract_features(bbox_coords, intersections, sp_file):
-    features = []
-    num_objects_fixations = 0
-    time_on_objects = np.zeros(len(intersections))
-
-    for p in sp_file:
-        for bbox_i, r in enumerate(intersections):
-            if intersect(bbox_coords, [int(p['x']), int(p['y']), 1, 1]):
-                num_objects_fixations += 1
-                time_on_objects[bbox_i] += p['duration']
-
-    return num_objects_fixations, time_on_objects.tolist()
-
-
-# Main function
-def calculate_object_detection_features():
-    # Load object detector
-    detector = get_object_detector_object()
-    
-    # Instantiate DataFrame 
-    df = None 
-    
-    # Loop through scanpaths
-    sps = ut.load_scanpath(sp_file)
-    for sp_i, sp in enumerate(sps):
-        # id
-        id = ut.get_sp_id(sp_file, sp_i)
-        df_obj = pd.DataFrame(pd.Series(id), columns=["id"])
-
-        # Iterate through images in the folder
-        for filename in os.listdir(folder_path):
-            if filename.endswith(".png"):
-                img_path = os.path.join(folder_path, filename)
-
-                # Load the input image
-                image = mp.Image.create_from_file(img_path)
-
-                # Detect objects in the input image
-                detection_result = detector.detect(image)
-
-                # Process the detection result and extract rectangle coordinates
-                for idx, detection in enumerate(detection_result.detections):
-                    bbox_coords = [
-                        detection.bounding_box.origin_x,
-                        detection.bounding_box.origin_y,
-                        detection.bounding_box.width,
-                        detection.bounding_box.height
-                    ]
-
-                    # Read scanpath data and check for intersections
-                    with open(sp_file, 'r') as f:
-                        next(f)
-                        sp_data = []
-                        for line in f:
-                            idx, x, y, dur = map(float, line.strip().split(','))
-                            sp_data.append({'x': x, 'y': y, 'duration': dur})
-
-                    # Check intersection with bounding box
-                    intersections = []
-                    for p in sp_data:
-                        intersections.append(intersect(bbox_coords, [int(p['x']), int(p['y']), 1, 1]))
-
-                    # Extract features
-                    num_objects_fixations, time_on_objects = extract_features(bbox_coords, intersections, sp_data)
-                    df_obj.loc[idx, "number_of_object_fixations"] = num_objects_fixations
-                    df_obj.loc[idx, "time_on_objects"] = time_on_objects
-
-        # Concatenate to main DataFrame
-        df = pd.concat([df, df_obj], ignore_index=True)
-    
-    return df
 
 # --- main function to get scan_path features ---------------------------------
-def get_features(who: str = None, sal_mdl: str = "sam_resnet") -> pd.DataFrame:
+def get_features(
+    who: str = None, sal_mdl: str = "DeepGazeIIE", obj_save_fig: bool = False, slc=None
+) -> pd.DataFrame:
     """main function to get all the features. implement more functions here, if
     you want to add more features, i.e. saliency, or object driven ones
 
@@ -305,11 +208,21 @@ def get_features(who: str = None, sal_mdl: str = "sam_resnet") -> pd.DataFrame:
     # get files
     sp_files = ut.get_sp_files(who)
 
+    # slice files
+    if slc is not None:
+        sp_files = sorted(sp_files)
+        sp_files = sp_files[slice(slc[0], slc[1])]
+
     # instantiate df
     df = None
 
+    # delete obj_recog_scores.txt
+    curdir = os.path.dirname(__file__)
+    if os.path.exists(os.path.join(curdir, "..", "data", "obj_recog_scores.txt")):
+        os.remove(os.path.join(curdir, "..", "data", "obj_recog_scores.txt"))
+
     # loop sp files
-    for sp_file in sp_files:
+    for sp_file in tqdm(sp_files):
         # extract features and concat to df
         df_file = calculate_sp_features(sp_file)
 
@@ -317,17 +230,19 @@ def get_features(who: str = None, sal_mdl: str = "sam_resnet") -> pd.DataFrame:
         df_sal = calculate_saliency_features(sp_file, mdl=sal_mdl)
         df_file = df_file.merge(df_sal, on="id")
 
-        # extract object detection features
-        df_obj = calculate_object_detection_features()
-        df_file = df_file.merge(df_obj, on="id")
-
         # TEMPLATE: extract XXXXX features
-        #df_XXX = calculate_XXX_features(sp_file)
-        #df_file = df_file.merge(df_XXX, on="id")
+        df_XXX = calculate_XXX_features(sp_file)
+        df_file = df_file.merge(df_XXX, on="id")
 
         # concat file_df to complete_df
         df = pd.concat([df, df_file], ignore_index=True)
 
+    # impute NaN's in object recognition features
+    obj_cols = [col for col in df.columns if "obj_" in col]
+    for c in obj_cols:
+        df[[c]] = df[[c]].fillna(value=0)
+
+    # return results
     return df
 
 
@@ -345,6 +260,16 @@ if __name__ == "__main__":
         "ASD_scanpath_1.txt",
     )
 
-    # get_sp_features(who="TD")
+    # get_features()
+
+    # df = get_features(who="td", sal_mdl="sam_resnet")
+    # path_df = os.path.join(curdir, "..", "data", "df_sam_resnet_td.csv")
+    # df.to_csv(path_df)
+
+    # df = get_features(who="td", obj_save_fig=True, slc=[0, 10])
+    # path_df = os.path.join(curdir, "..", "data", "df_deepgaze2e_td_3.csv")
+    # df.to_csv(path_df)
+
     # calculate_sp_features(sp_file=sp_file)
     # calculate_saliency_features(sp_file=sp_file)
+    # calculate_object_detection_features(sp_file=sp_file)
