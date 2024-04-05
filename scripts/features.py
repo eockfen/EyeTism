@@ -251,38 +251,63 @@ def is_animate(x):
 def calculate_object_detection_features(
     sp_file: str, obj_save_fig: bool = False
 ) -> pd.DataFrame:
-    # Load object & face detector
-    detector = get_object_detector_object()
+    # ----- set rules for ignoring/changing certain detected objects ----------
+    detections_ignore = {
+        52: ["bed"],
+        55: ["person"],
+        66: ["dog"],
+        84: ["person"],
+        159: ["person"],
+        289: ["horse"],
+    }
+    detections_change = {180: {"chair": "cat"}}
 
-    # Instantiate DataFrame
+    # instantiate DataFrame
     df = None
 
     # image to scanpath
+    img_nr = int(sp_file.split("_")[-1].split(".")[0])
     img_file = ut.get_img_of_sp(sp_file)
 
-    # Load the input image
+    # load the input image
     image = mp.Image.create_from_file(img_file)
 
-    # Detect objects in the input image
+    # load object detector & detect
+    detector = get_object_detector_object()
     detection_result = detector.detect(image)
 
-    # Detect faces
+    # detect faces
     fr_image = face_recognition.load_image_file(img_file)
     face_locations = face_recognition.face_locations(fr_image, model="cnn")
 
-    # Loop through scanpaths
+    # write scores of detected objects
+    curdir = os.path.dirname(__file__)
+    for _, detection in enumerate(detection_result.detections):
+        _img = img_file.split("/")[-1]
+        obj_name = detection.categories[0].category_name
+        obj_score = detection.categories[0].score
+        with open(
+            os.path.join(curdir, "..", "data", "obj_recog_scores.txt"), "a+"
+        ) as file:
+            file.write(f"\n{_img} {obj_name} {obj_score}")
+
+    # ----- loop through scanpaths ----------
     sps = ut.load_scanpath(sp_file)
     for sp_i, sp in enumerate(sps):
         # id
         id = ut.get_sp_id(sp_file, sp_i)
         df_obj = pd.DataFrame(pd.Series(id), columns=["id"])
 
-        # Process faces in the images
+        # keep track of background fixations
+        flag_fix_face = [False] * len(sp)
+
+        # ----- Process faces in the images ----------
         df_obj["obj_n_fix_face"] = 0
         df_obj["obj_t_abs_on_face"] = 0
         df_obj["obj_t_rel_on_face"] = 0
 
-        for _, p in sp.iterrows():
+        # Loop fixations
+        for _, fix in sp.iterrows():
             # flag to skip 'p' if have been found on a face
             on_face = False
 
@@ -294,12 +319,15 @@ def calculate_object_detection_features(
 
                 # check if fix inside bbox
                 if (
-                    intersect(bbox_coords, [int(p["x"]), int(p["y"]), 1, 1])
+                    intersect(bbox_coords, [int(fix["x"]), int(fix["y"]), 1, 1])
                     and not on_face
                 ):
                     # update faces
                     df_obj["obj_n_fix_face"] += 1
-                    df_obj["obj_t_abs_on_face"] += p["duration"]
+                    df_obj["obj_t_abs_on_face"] += fix["duration"]
+
+                    # update flag: fix_on_face
+                    flag_fix_face[fix["idx"]] = True
 
                     # set flag to indicate that this 'p' was on a face already
                     on_face = True
@@ -307,7 +335,7 @@ def calculate_object_detection_features(
         # calc relative time on faces
         df_obj["obj_t_rel_on_face"] = df_obj["obj_t_abs_on_face"] / sp["duration"].sum()
 
-        # Process the detection result and extract rectangle coordinates
+        # ----- Process the detected objects ----------
         df_obj["obj_n_fix_animate"] = 0
         df_obj["obj_n_fix_inanimate"] = 0
         df_obj["obj_n_fix_background"] = 0
@@ -318,7 +346,8 @@ def calculate_object_detection_features(
         df_obj["obj_t_rel_on_inanimate"] = 0
         df_obj["obj_t_rel_on_background"] = 0
 
-        for _, p in sp.iterrows():
+        # loop fixations
+        for _, fix in sp.iterrows():
             # flag-list to skip 'p' if have been found on this kind of object
             on_object = []
 
@@ -333,6 +362,14 @@ def calculate_object_detection_features(
                     detection.bounding_box.height,
                 ]
 
+                # handle exception rules
+                if img_nr in detections_ignore.keys():
+                    if obj_name in detections_ignore[img_nr]:
+                        continue
+                if img_nr in detections_change.keys():
+                    if obj_name in detections_change[img_nr].keys():
+                        obj_name = detections_change[img_nr][obj_name]
+
                 # create 'object' column if not done previously
                 if f"obj_n_fix_{obj_name}_obj" not in df_obj.columns:
                     df_obj[f"obj_n_fix_{obj_name}_obj"] = 0
@@ -340,57 +377,62 @@ def calculate_object_detection_features(
 
                 # check if fix inside bbox
                 if (
-                    intersect(bbox_coords, [int(p["x"]), int(p["y"]), 1, 1])
+                    intersect(bbox_coords, [int(fix["x"]), int(fix["y"]), 1, 1])
                     and obj_name not in on_object
                 ):
                     # update object
                     df_obj[f"obj_n_fix_{obj_name}_obj"] += 1
-                    df_obj[f"obj_t_abs_on_{obj_name}_obj"] += p["duration"]
+                    df_obj[f"obj_t_abs_on_{obj_name}_obj"] += fix["duration"]
 
                     # update animate / inanimate
                     if is_animate(obj_name):
                         df_obj["obj_n_fix_animate"] += 1
-                        df_obj["obj_t_abs_on_animate"] += p["duration"]
+                        df_obj["obj_t_abs_on_animate"] += fix["duration"]
                     else:
                         df_obj["obj_n_fix_inanimate"] += 1
-                        df_obj["obj_t_abs_on_inanimate"] += p["duration"]
+                        df_obj["obj_t_abs_on_inanimate"] += fix["duration"]
 
                     # set flag-list
                     on_object.append(obj_name)
 
-            # if still on no object -> background
-            if on_object == []:
-                df_obj["obj_n_fix_background"] = (
-                    len(sp)
-                    - df_obj.loc[0, "obj_n_fix_animate"]
-                    - df_obj.loc[0, "obj_n_fix_inanimate"]
-                )
-                df_obj["obj_t_abs_on_background"] = (
-                    sp["duration"].sum()
-                    - df_obj.loc[0, "obj_t_abs_on_animate"]
-                    - df_obj.loc[0, "obj_t_abs_on_inanimate"]
-                )
+            # check if fixation not on OBJECT nor FACE -> background
+            if on_object == [] and not flag_fix_face[fix["idx"]]:
+                df_obj["obj_n_fix_background"] += 1
+                df_obj["obj_t_abs_on_background"] += fix["duration"]
 
         # calc relative time on "categories"
-        df_obj["obj_t_rel_on_animate"] = (
-            df_obj["obj_t_abs_on_animate"] / sp["duration"].sum()
+        df_obj["obj_t_rel_on_animate"] = min(
+            [df_obj.loc[0, "obj_t_abs_on_animate"] / sp["duration"].sum(), 1]
         )
-        df_obj["obj_t_rel_on_inanimate"] = (
-            df_obj["obj_t_abs_on_inanimate"] / sp["duration"].sum()
+        df_obj["obj_t_rel_on_inanimate"] = min(
+            [df_obj.loc[0, "obj_t_abs_on_inanimate"] / sp["duration"].sum(), 1]
         )
-        df_obj["obj_t_rel_on_background"] = (
-            df_obj["obj_t_abs_on_background"] / sp["duration"].sum()
+        df_obj["obj_t_rel_on_background"] = min(
+            [df_obj.loc[0, "obj_t_abs_on_background"] / sp["duration"].sum(), 1]
         )
         for detection in detection_result.detections:
             obj_name = detection.categories[0].category_name
-            df_obj[f"obj_t_rel_on_{obj_name}_obj"] = (
-                df_obj[f"obj_t_abs_on_{obj_name}_obj"] / sp["duration"].sum()
+
+            # handle exceptions
+            if img_nr in detections_ignore.keys():
+                if obj_name in detections_ignore[img_nr]:
+                    continue
+            if img_nr in detections_change.keys():
+                if obj_name in detections_change[img_nr].keys():
+                    obj_name = detections_change[img_nr][obj_name]
+
+            df_obj[f"obj_t_rel_on_{obj_name}_obj"] = min(
+                [
+                    df_obj.loc[0, f"obj_t_abs_on_{obj_name}_obj"]
+                    / sp["duration"].sum(),
+                    1,
+                ]
             )
 
-        # Concatenate to main DataFrame
+        # ----- Concatenate to main DataFrame ----------
         df = pd.concat([df, df_obj], ignore_index=True)
 
-        # save resulting figure to "images/obj_recog_results/"
+        # ----- save figure to "images/obj_recog_results/" ----------
         if obj_save_fig:
             # create folder if not there
             curdir = os.path.dirname(__file__)
@@ -420,6 +462,19 @@ def calculate_object_detection_features(
 
             # add objects
             for _, detection in enumerate(detection_result.detections):
+                # name & score
+                obj_name = detection.categories[0].category_name
+                obj_score = detection.categories[0].score
+
+                # handle exception rules
+                if img_nr in detections_ignore.keys():
+                    if obj_name in detections_ignore[img_nr]:
+                        continue
+                if img_nr in detections_change.keys():
+                    if obj_name in detections_change[img_nr].keys():
+                        obj_name = detections_change[img_nr][obj_name]
+
+                # add rectangle
                 rect = patches.Rectangle(
                     (detection.bounding_box.origin_x, detection.bounding_box.origin_y),
                     detection.bounding_box.width,
@@ -430,9 +485,20 @@ def calculate_object_detection_features(
                 )
                 ax.add_patch(rect)
 
+                # add label
+                txt = f"'{obj_name}' at {obj_score*100:.2f}%"
+                plt.text(
+                    detection.bounding_box.origin_x,
+                    detection.bounding_box.origin_y,
+                    txt,
+                    fontweight="bold",
+                    backgroundcolor="orange",
+                    verticalalignment="top",
+                )
+
             # add fixations
             plt.plot(sp["x"], sp["y"], "+", color="k", mew=3, ms=40)
-            plt.plot(sp["x"], sp["y"], "o", color="r", mec="k", mew=1.5, ms=10)
+            plt.plot(sp["x"], sp["y"], "o", color="w", mec="r", mew=1.5, ms=10)
 
             # style
             plt.ylim(img.shape[0] - 1, 0)
@@ -469,6 +535,11 @@ def get_features(
 
     # instantiate df
     df = None
+
+    # delete obj_recog_scores.txt
+    curdir = os.path.dirname(__file__)
+    if os.path.exists(os.path.join(curdir, "..", "data", "obj_recog_scores.txt")):
+        os.remove(os.path.join(curdir, "..", "data", "obj_recog_scores.txt"))
 
     # loop sp files
     for sp_file in tqdm(sp_files):
