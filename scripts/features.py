@@ -203,10 +203,15 @@ def calculate_saliency_features(sp_file: str, mdl: str = "sam_resnet") -> pd.Dat
 # Create an ObjectDetector object.
 def get_object_detector_object():
     curdir = os.path.dirname(__file__)
-    mdl_pth = os.path.join(curdir, "..", "models", "efficientdet.tflite")
-    base_options = python.BaseOptions(model_asset_path=mdl_pth)
+    mdl_pth = os.path.join(
+        curdir, "..", "models", "mediapipe", "efficientdet_lite0.tflite"
+    )
+
     options = vision.ObjectDetectorOptions(
-        base_options=base_options, score_threshold=0.5
+        base_options=python.BaseOptions(model_asset_path=mdl_pth),
+        score_threshold=0.2,
+        max_results=10,
+        running_mode=vision.RunningMode.IMAGE,
     )
     detector = vision.ObjectDetector.create_from_options(options)
     return detector
@@ -233,40 +238,304 @@ def intersect(rect1, rect2):
 # test if obejct is animate
 def is_animate(x):
     animate = [
-        "bird",
         "person",
-        "giraffe",
-        "sheep",
-        "horse",
+        "deer",
+        "cat",
+        "alligator",
         "bear",
         "dog",
-        "cow",
-        "cat",
-        "elephant",
+        "elk",
+        "bird",
+        "rodent",
+        "horse",
+        "tiger",
+        "fish",
+        "sealion",
+        "lion",
+        "insect",
+        "giraffe",
+        "squirrel",
+        "ape",
+        "leopard",
+        "butterfly",
+        "gorilla",
     ]
     return True if x in animate else False
 
 
+def process_detections(detections, img_file, path_obj_recog):
+    ignore = {
+        4: [1, 2, 3, 4, 6, 7],
+        10: [3, 4, 5, 6],
+        11: [0, 1],
+        13: [1],
+        16: [1, 2, 3],
+        17: [6],
+        19: [2, 3],
+        23: list(range(3, 10)),
+        24: [1],
+        27: [3],
+        28: [2, 3],
+        33: [2, 3, 4, 5, 6, 7, 8],
+        34: [1],
+        36: [1],
+        38: [1],
+        39: list(range(1, 5)),
+        42: [4],
+        44: [8],
+        46: [7, 8, 9],
+        51: [2],
+        52: [0],
+        53: [3],
+        54: [2],
+        55: [0, 1],
+        63: [7],
+        64: [1, 3],
+        65: [2, 3],
+        66: [0, 1],
+        67: [2, 3],
+        68: [2, 4, 9],
+        70: [1, 2],
+        72: [7],
+        73: [0],
+        74: [5, 7],
+        76: [1, 2, 3],
+        77: [0],
+        79: [0],
+        81: [0],
+        83: [2, 3],
+        84: [0, 3, 4, 5, 7, 8],
+        87: [1],
+        89: [2, 3],
+        98: [1],
+        102: [4],
+        108: [2, 3],
+        111: [2],
+        112: [0],
+        114: [1],
+        115: [6],
+        116: [4, 7],
+        119: [1],
+        123: [2],
+        125: [0, 1, 2, 3, 4],
+        127: [7],
+        130: [6],
+        131: [0],
+        132: [1],
+        134: [3, 6],
+        135: [1],
+        136: [1],
+        137: [2],
+        138: [4],
+        139: [4, 6],
+        141: [3, 6],
+        143: [0],
+        148: [1, 2],
+        149: [6, 7],
+        150: [4, 5],
+        151: [2, 4, 5, 6],
+        153: [0],
+        154: [2],
+        160: [5, 6, 7, 9],
+        161: [2],
+        162: [1],
+        163: [5],
+        167: [9],
+        169: [2, 3],
+        171: [2],
+        172: [7, 8, 9],
+        173: [2],
+        175: [0],
+        177: [2],
+        183: [0, 4],
+        186: [1],
+        188: list(range(2, 16)),
+        192: [7],
+        198: [0],
+        200: [7],
+        201: [0],
+        202: [3, 4, 5, 6],
+        205: [4],
+        206: [1],
+        207: [3],
+        208: [1],
+        209: [4, 5, 7, 8, 9],
+        210: [8],
+        211: [0, 2],
+        214: [7],
+        215: [4, 9],
+        217: [1],
+        220: [1],
+        224: [1],
+        225: list(range(1, 6)),
+        226: [1],
+        228: [4],
+        229: [1],
+        231: [7, 9],
+        232: [1],
+        234: [5, 6, 7, 8, 9],
+        237: [4],
+        239: [1],
+        241: [1, 2, 3, 4],
+        242: [3],
+        246: [1],
+        247: [0, 1, 2],
+        250: [0, 3, 4, 5],
+        252: [1, 2, 3],
+        254: [3],
+        255: [1],
+        256: [1],
+        257: [5, 6],
+        258: [0],
+        259: [0, 5],
+        261: [1],
+        265: [8],
+        266: [1, 2, 3],
+        271: [1, 2, 3],
+        273: [1, 3],
+        274: [6],
+        281: [4],
+        282: [1, 2],
+        284: [2, 3, 4, 6, 7, 8],
+        285: [1, 4, 5, 6, 8],
+        287: [1, 4],
+        290: [3, 5],
+        293: list(range(7)),
+        295: [2],
+        297: [6],
+    }
+    switch = {
+        2: {1: "guitar"},
+        3: {1: "guitar"},
+        4: {0: "icecream"},
+        8: {0: "leopard"},
+        13: {0: "rodent"},
+        15: {0: "tiger"},
+        17: {4: "sealion"},
+        18: {0: "lion"},
+        22: {0: "deer"},
+        23: {2: "fan"},
+        26: {0: "cat"},
+        27: {4: "orange"},
+        29: {5: "handbag"},
+        36: {0: "statue"},
+        40: {0: "deer", 1: "deer", 2: "deer"},
+        44: {7: "bicycle"},
+        53: {2: "guitar"},
+        67: {1: "airplane"},
+        74: {8: "bag"},
+        77: {2: "meat", 3: "meat", 5: "bread"},
+        80: {0: "machine"},
+        84: {1: "cat", 2: "cat", 6: "cat"},
+        86: {0: "lion", 1: "lion"},
+        91: {0: "dummy"},
+        93: {2: "book"},
+        94: {0: "butterfly"},
+        96: {
+            0: "gorilla",
+            1: "gorilla",
+            2: "gorilla",
+            3: "plant",
+            4: "gorilla",
+            5: "gorilla",
+        },
+        97: {0: "squirrel"},
+        98: {0: "deer"},
+        100: {0: "deer"},
+        101: {3: "statue"},
+        106: {0: "toy"},
+        109: {1: "trophy"},
+        110: {0: "alligator"},
+        111: {1: "book"},
+        116: {3: "table", 5: "paper", 6: "couch"},
+        117: {2: "toy", 3: "person", 4: "toy"},
+        118: {1: "toy"},
+        119: {3: "person"},
+        124: {0: "elk"},
+        135: {0: "rodent"},
+        137: {1: "statue"},
+        138: {3: "can"},
+        146: {7: "art"},
+        153: {1: "lock"},
+        155: {0: "alligator"},
+        156: {0: "fish", 1: "fish", 2: "fish", 3: "fish"},
+        159: {0: "bird", 5: "bird"},
+        167: {4: "cup"},
+        169: {0: "balloon"},
+        170: {0: "plant"},
+        172: {6: "bag"},
+        179: {0: "food"},
+        181: {0: "insect"},
+        188: {1: "sign"},
+        202: {1: "glass"},
+        205: {3: "sign"},
+        208: {0: "car"},
+        210: {9: "instrument"},
+        212: {1: "cup"},
+        219: {0: "fish"},
+        220: {0: "fish"},
+        223: {2: "hat", 3: "bottle"},
+        242: {4: "bowl"},
+        249: {0: "squirrel"},
+        252: {4: "book"},
+        259: {6: "bag"},
+        263: {0: "ape"},
+        267: {8: "plate"},
+        272: {3: "person", 7: "person"},
+        273: {2: "table"},
+        287: {3: "suitcase", 6: "box "},
+        288: {0: "statue"},
+        290: {4: "hat"},
+        294: {4: "tie"},
+    }
+
+    # current image number
+    img_nr = int(img_file.split("/")[-1].split(".")[0])
+
+    # handle RENAMINGS of detections
+    if img_nr in switch.keys():
+        for i in switch[img_nr].keys():
+            detections.detections[i].categories[0].category_name = switch[img_nr][i]
+
+    # handle DELETIONS of detections
+    if img_nr in ignore.keys():
+        to_delete = ignore[img_nr]
+        detections.detections = [
+            detections.detections[i]
+            for i in range(len(detections.detections))
+            if i not in to_delete
+        ]
+
+    # file to write
+    ftw = os.path.join(path_obj_recog, f"{img_nr}_scores.txt")
+
+    # delete previous file
+    if os.path.exists(ftw):
+        os.remove(ftw)
+
+    # write scores of detected objects
+    with open(ftw, "a+") as file:
+        file.write("\nobj_id obj_name obj_score")
+    for obj_id, detection in enumerate(detections.detections):
+        obj_name = detection.categories[0].category_name
+        obj_score = detection.categories[0].score
+        with open(ftw, "a+") as file:
+            file.write(f"\n{obj_id} {obj_name} {round(obj_score*100, 3)}")
+
+    return detections
+
+
 # Main function
 def calculate_object_detection_features(
-    sp_file: str, obj_save_fig: bool = False
+    sp_file: str,
+    path_obj_recog: str,
+    obj_individuals: bool = True,
+    obj_save_fig: bool = True,
 ) -> pd.DataFrame:
-    # ----- set rules for ignoring/changing certain detected objects ----------
-    detections_ignore = {
-        52: ["bed"],
-        55: ["person"],
-        66: ["dog"],
-        84: ["person"],
-        159: ["person"],
-        289: ["horse"],
-    }
-    detections_change = {180: {"chair": "cat"}}
-
     # instantiate DataFrame
     df = None
 
     # image to scanpath
-    img_nr = int(sp_file.split("_")[-1].split(".")[0])
     img_file = ut.get_img_of_sp(sp_file)
 
     # load the input image
@@ -276,24 +545,19 @@ def calculate_object_detection_features(
     detector = get_object_detector_object()
     detection_result = detector.detect(image)
 
+    # fix detections based on manualy defined rules
+    detection_result = process_detections(detection_result, img_file, path_obj_recog)
+
     # detect faces
     fr_image = face_recognition.load_image_file(img_file)
     face_locations = face_recognition.face_locations(fr_image, model="cnn")
 
-    # write scores of detected objects
-    curdir = os.path.dirname(__file__)
-    for _, detection in enumerate(detection_result.detections):
-        _img = img_file.split("/")[-1]
-        obj_name = detection.categories[0].category_name
-        obj_score = detection.categories[0].score
-        with open(
-            os.path.join(curdir, "..", "data", "obj_recog_scores.txt"), "a+"
-        ) as file:
-            file.write(f"\n{_img} {obj_name} {obj_score}")
-
     # ----- loop through scanpaths ----------
     sps = ut.load_scanpath(sp_file)
     for sp_i, sp in enumerate(sps):
+        if not obj_individuals and sp_i > 0:
+            continue
+
         # id
         id = ut.get_sp_id(sp_file, sp_i)
         df_obj = pd.DataFrame(pd.Series(id), columns=["id"])
@@ -306,7 +570,7 @@ def calculate_object_detection_features(
         df_obj["obj_t_abs_on_face"] = 0
         df_obj["obj_t_rel_on_face"] = 0
 
-        # Loop fixations
+        # loop fixations over faces
         for _, fix in sp.iterrows():
             # flag to skip 'p' if have been found on a face
             on_face = False
@@ -346,7 +610,7 @@ def calculate_object_detection_features(
         df_obj["obj_t_rel_on_inanimate"] = 0
         df_obj["obj_t_rel_on_background"] = 0
 
-        # loop fixations
+        # loop fixations over objects
         for _, fix in sp.iterrows():
             # flag-list to skip 'p' if have been found on this kind of object
             on_object = []
@@ -361,14 +625,6 @@ def calculate_object_detection_features(
                     detection.bounding_box.width,
                     detection.bounding_box.height,
                 ]
-
-                # handle exception rules
-                if img_nr in detections_ignore.keys():
-                    if obj_name in detections_ignore[img_nr]:
-                        continue
-                if img_nr in detections_change.keys():
-                    if obj_name in detections_change[img_nr].keys():
-                        obj_name = detections_change[img_nr][obj_name]
 
                 # create 'object' column if not done previously
                 if f"obj_n_fix_{obj_name}_obj" not in df_obj.columns:
@@ -412,15 +668,6 @@ def calculate_object_detection_features(
         )
         for detection in detection_result.detections:
             obj_name = detection.categories[0].category_name
-
-            # handle exceptions
-            if img_nr in detections_ignore.keys():
-                if obj_name in detections_ignore[img_nr]:
-                    continue
-            if img_nr in detections_change.keys():
-                if obj_name in detections_change[img_nr].keys():
-                    obj_name = detections_change[img_nr][obj_name]
-
             df_obj[f"obj_t_rel_on_{obj_name}_obj"] = min(
                 [
                     df_obj.loc[0, f"obj_t_abs_on_{obj_name}_obj"]
@@ -435,10 +682,9 @@ def calculate_object_detection_features(
         # ----- save figure to "images/obj_recog_results/" ----------
         if obj_save_fig:
             # create folder if not there
-            curdir = os.path.dirname(__file__)
-            path_img = os.path.join(curdir, "..", "data", "obj_recog_results")
-            if not os.path.exists(path_img):
-                os.makedirs(path_img)
+            path_individual = os.path.join(path_obj_recog, "individual")
+            if not os.path.exists(path_individual):
+                os.makedirs(path_individual)
 
             img = iio.imread(img_file)
             plt.figure(
@@ -466,14 +712,6 @@ def calculate_object_detection_features(
                 obj_name = detection.categories[0].category_name
                 obj_score = detection.categories[0].score
 
-                # handle exception rules
-                if img_nr in detections_ignore.keys():
-                    if obj_name in detections_ignore[img_nr]:
-                        continue
-                if img_nr in detections_change.keys():
-                    if obj_name in detections_change[img_nr].keys():
-                        obj_name = detections_change[img_nr][obj_name]
-
                 # add rectangle
                 rect = patches.Rectangle(
                     (detection.bounding_box.origin_x, detection.bounding_box.origin_y),
@@ -486,27 +724,46 @@ def calculate_object_detection_features(
                 ax.add_patch(rect)
 
                 # add label
-                txt = f"'{obj_name}' at {obj_score*100:.2f}%"
+                txt_name = f"{_}: {obj_name}"
+                txt_score = f"{obj_score*100:.2f}%"
                 plt.text(
                     detection.bounding_box.origin_x,
                     detection.bounding_box.origin_y,
-                    txt,
-                    fontweight="bold",
+                    txt_name,
+                    fontsize=6,
                     backgroundcolor="orange",
                     verticalalignment="top",
                 )
-
-            # add fixations
-            plt.plot(sp["x"], sp["y"], "+", color="k", mew=3, ms=40)
-            plt.plot(sp["x"], sp["y"], "o", color="w", mec="r", mew=1.5, ms=10)
+                plt.text(
+                    detection.bounding_box.origin_x + detection.bounding_box.width,
+                    detection.bounding_box.origin_y + detection.bounding_box.height,
+                    txt_score,
+                    fontsize=6,
+                    verticalalignment="bottom",
+                    horizontalalignment="right",
+                    bbox={"alpha": 0.35, "color": "w"},
+                )
 
             # style
             plt.ylim(img.shape[0] - 1, 0)
             plt.xlim(0, img.shape[1] - 1)
             plt.tight_layout
 
-            # save plot
-            plt.savefig(os.path.join(path_img, f"{id}.png"), dpi=100)
+            # save detected objects for first scanpath
+            if sp_i == 0:
+                plt.savefig(
+                    os.path.join(path_obj_recog, os.path.basename(img_file)), dpi=100
+                )
+
+            # add fixations for individual plot
+            if obj_individuals:
+                plt.plot(sp["x"], sp["y"], "+", color="k", mew=3, ms=40)
+                plt.plot(sp["x"], sp["y"], "o", color="w", mec="r", mew=1.5, ms=10)
+
+                # save plot
+                plt.savefig(os.path.join(path_individual, f"{id}.png"), dpi=100)
+
+            # close plot
             plt.close()
 
     return df
@@ -514,7 +771,11 @@ def calculate_object_detection_features(
 
 # --- main function to get scan_path features ---------------------------------
 def get_features(
-    who: str = None, sal_mdl: str = "DeepGazeIIE", obj_save_fig: bool = False, slc=None
+    who: str = None,
+    sal_mdl: str = "DeepGazeIIE",
+    obj_individuals: bool = True,
+    obj_save_fig: bool = True,
+    slc=None,
 ) -> pd.DataFrame:
     """main function to get all the features. implement more functions here, if
     you want to add more features, i.e. saliency, or object driven ones
@@ -526,20 +787,20 @@ def get_features(
         DataFrame: pd.DataFrane containing scanpath features
     """
     # get files
-    sp_files = ut.get_sp_files(who)
+    sp_files = sorted(ut.get_sp_files(who))
 
     # slice files
     if slc is not None:
-        sp_files = sorted(sp_files)
         sp_files = sp_files[slice(slc[0], slc[1])]
 
     # instantiate df
     df = None
 
-    # delete obj_recog_scores.txt
+    # delete obj_recog files
     curdir = os.path.dirname(__file__)
-    if os.path.exists(os.path.join(curdir, "..", "data", "obj_recog_scores.txt")):
-        os.remove(os.path.join(curdir, "..", "data", "obj_recog_scores.txt"))
+    path_obj_recog = os.path.join(curdir, "..", "data", "obj_recog")
+    if not os.path.exists(path_obj_recog):
+        os.mkdir(path_obj_recog)
 
     # loop sp files
     for sp_file in tqdm(sp_files):
@@ -551,7 +812,12 @@ def get_features(
         df_file = df_file.merge(df_sal, on="id")
 
         # extract object detection features
-        df_obj = calculate_object_detection_features(sp_file, obj_save_fig=obj_save_fig)
+        df_obj = calculate_object_detection_features(
+            sp_file,
+            path_obj_recog=path_obj_recog,
+            obj_individuals=obj_individuals,
+            obj_save_fig=obj_save_fig,
+        )
         df_file = df_file.merge(df_obj, on="id")
 
         # TEMPLATE: extract XXXXX features
@@ -581,10 +847,12 @@ if __name__ == "__main__":
         "Saliency4ASD",
         "TrainingData",
         "ASD",
-        "ASD_scanpath_1.txt",
+        "ASD_scanpath_10.txt",
     )
 
-    # get_features()
+    # path_df = os.path.join("..", "data", "df_sam.csv")
+    # df = get_features(sal_mdl='sam_resnet')
+    # df.to_csv(path_df, index=False)
 
     # df = get_features(who="td", sal_mdl="sam_resnet")
     # path_df = os.path.join(curdir, "..", "data", "df_sam_resnet_td.csv")
@@ -596,4 +864,11 @@ if __name__ == "__main__":
 
     # calculate_sp_features(sp_file=sp_file)
     # calculate_saliency_features(sp_file=sp_file)
-    # calculate_object_detection_features(sp_file=sp_file)
+
+    # # delete obj_recog files
+    # curdir = os.path.dirname(__file__)
+    # path_obj_recog = os.path.join(curdir, "..", "data", "obj_recog")
+    # if os.path.exists(path_obj_recog):
+    #     shutil.rmtree(path_obj_recog)
+    # os.mkdir(path_obj_recog)
+    # calculate_object_detection_features(sp_file, path_obj_recog)
