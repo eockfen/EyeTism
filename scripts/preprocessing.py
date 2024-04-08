@@ -1,6 +1,74 @@
 # it's all about the features
 import os
 import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+
+def display_corr_matrix(data, thresh: float = None):
+    """Display a heatmap from a given dataset
+
+    Args:
+        data (dataset): dataframe containing columns to be correlated with each other
+        thresh (float): threshold correlation value defines which r's should be annotated
+
+    Returns:
+        g (graph)
+    """
+    # Create a correlation matrix & a mask for the lower triangle
+    cm = data.corr()
+    mask = np.zeros_like(cm)
+    mask[np.triu_indices_from(mask)] = None
+
+    txt_s = cm.values.astype(str)
+    txt_s[np.abs(cm.values) >= thresh] = "X"
+    txt_s[np.abs(cm.values) < thresh] = ""
+
+    # Generate a custom diverging colormap
+    cmap = sns.diverging_palette(240, 10, sep=20, n=9, as_cmap=True)
+
+    # Draw the heatmap with the mask and correct aspect ratio
+    annot = False if thresh is None else txt_s
+    plt.figure(figsize=(9, 9))
+    g = sns.heatmap(
+        cm,
+        cmap=cmap,
+        mask=mask,
+        square=True,
+        annot=annot,
+        fmt="",
+        center=0,
+        cbar_kws={"shrink": 0.5, "label": "Pearson r"},
+    )
+    g.grid(False)
+    plt.show()
+
+
+def check_correlations(df, thresh):
+    corr_matrix = df.corr()
+
+    # Find pairs with correlation >= 0.8
+    high_corr_pairs = np.column_stack(
+        np.where((np.abs(corr_matrix) >= thresh) & (corr_matrix != 1))
+    )
+    high_corr_cols = []
+
+    # Extracting and printing the pairs
+    seen_pairs = set()
+    for i, j in high_corr_pairs:
+        col1, col2 = corr_matrix.columns[i], corr_matrix.columns[j]
+        if (col2, col1) not in seen_pairs:
+            print(
+                f"Correlation between {col1} and {col2} is {round(corr_matrix.iloc[i, j], 3)}"
+            )
+            seen_pairs.add((col1, col2))
+            seen_pairs.add((col2, col1))
+            high_corr_cols.append(col1)
+            high_corr_cols.append(col2)
+
+    # display corr. matrix
+    display_corr_matrix(df, thresh=thresh)
 
 
 # --- own train-test-split function -------------------------------------------
