@@ -2,14 +2,17 @@
     functions to evaluate models and results
 """
 
-# import libraries --------------------
+# import libraries ------------------------------------------------------------
 import os
 import math
 import pickle
 import pprint
 import numpy as np
+import pandas as pd
 from matplotlib import pyplot as plt
 import seaborn as sns
+import imageio.v3 as iio
+from tqdm import tqdm
 from sklearn.metrics import (
     classification_report,
     confusion_matrix,
@@ -18,11 +21,17 @@ from sklearn.metrics import (
     RocCurveDisplay,
     fbeta_score,
     make_scorer,
+    f1_score,
+    accuracy_score,
+    precision_score,
+    recall_score,
 )
+from sklearn.inspection import permutation_importance
 from sklearn.model_selection import LearningCurveDisplay, ShuffleSplit
+from scripts import utils as ut
 
 
-# saving a model --------------------
+# saving a model --------------------------------------------------------------
 def save_model(
     m,
     file: str = "some_model.pickle",
@@ -64,28 +73,29 @@ def save_model(
         print(f" ERROR -> do not overwrite previously saved model in: '{path_file}'")
 
 
-# evaluate a fitted gridsearchCV --------------------
-def eval_grid_search(grid, X_test: np.asarray) -> np.array:
-    """Given a fitted GridSearchCV model and a test set, the y_predictions of
-    the best estimators are returned.
+# fit model and save it, unless it is already fitted --------------------------
+def fit_or_load(
+    mdl, X_train, y_train, file, folder: str = None, overwrite: bool = False
+):
+    filename = os.path.join("..", "models", folder, f"{file}")
 
-    Args:
-        grid (model): fitted model
-        X_test (np.asarray): test set
+    # load if exists and should not
+    if os.path.exists(filename) and not overwrite:
+        print(f" -> model loaded from: '{filename}'")
+        return pickle.load(open(filename, "rb"))
 
-    Returns:
-        np.array: predictions for test set
-    """
-    best_params = grid.best_params_
-    best_model = grid.best_estimator_
+    # return if no model found to load and no given to fit
+    if mdl is None:
+        return print(" -> no model given...")
 
-    print("Best parameters:")
-    pprint.PrettyPrinter(width=30).pprint(best_params)
+    # else run & save
+    mdl.fit(X_train, y_train)
+    save_model(mdl, file, folder=folder, overwrite=overwrite)
 
-    return best_model.predict(X_test)
+    return mdl
 
 
-# print some information about the model given --------------------
+# print some information about the model given --------------------------------
 def model_info(model):
     """Displays some information about the (fitted!) model given.
 
@@ -93,71 +103,49 @@ def model_info(model):
         model (model): Fitted (!) sklearn model.
     """
 
-    # model infos
-    type_ = str(type(model))
+    # model name
+    estimator_name = model.__class__.__name__
 
-    if "DecisionTreeClassifier" in type_:
-        tree_name = "Decision Tree"
-        tree_depth = model.tree_.max_depth
-        tree_nodes = model.tree_.node_count
+    # --- GridSearch or RandomizedSearch ---------------
+    if estimator_name in ["GridSearchCV", "RandomizedSearchCV"]:
+        print(" --------------- " + estimator_name + " --------------- ")
 
-        # how deep
-        print(f"`{tree_name}` has:")
-        print(f" -> {tree_nodes} nodes")
-        print(f" -> maximum depth {tree_depth}")
-
-    elif "RandomForestClassifier" in type_:
-        print("current parameter:")
-        pprint.PrettyPrinter(width=20).pprint(model.get_params())
-
-        n_nodes = []
-        max_depths = []
-
-        for ind_tree in model.estimators_:
-            n_nodes.append(ind_tree.tree_.node_count)
-            max_depths.append(ind_tree.tree_.max_depth)
-
-        tree_name = "Random Forest"
-        tree_depth = int(np.mean(max_depths))
-        tree_nodes = int(np.mean(n_nodes))
-        txt_avg = "on average"
-
-        # how deep
-        print(
-            f'"{tree_name}" has {tree_nodes} nodes {txt_avg} with \
-                maximum depth {tree_depth} {txt_avg}.'
-        )
-
-    elif "RandomizedSearchCV" in type_:
-        best_model = model.best_estimator_
-        bm_type = str(type(best_model))
-
-        # here i need to match/case different kinds of estimators
-
-        print("best parameter:")
+        #    print(" ----- parameter: -----")
+        #    pprint.PrettyPrinter(width=20).pprint(model.get_params())
+        print("\n ----- best estimator: -----")
+        pprint.PrettyPrinter(width=20).pprint(model.best_estimator_)
+        print("\n ----- best parameter: -----")
         pprint.PrettyPrinter(width=20).pprint(model.best_params_)
 
-        # how deep?
+        estimator_name = model.estimator.steps[-1][-1].__class__.__name__
+        estimator = model.best_estimator_.steps[-1][-1]
+
+    # --- Random Forest ---------------
+    if estimator_name == "RandomForestClassifier":
         n_nodes = []
         max_depths = []
 
-        for ind_tree in best_model.estimators_:
+        for ind_tree in estimator.estimators_:
             n_nodes.append(ind_tree.tree_.node_count)
             max_depths.append(ind_tree.tree_.max_depth)
 
-        tree_name = bm_type.split(".")[-1].split("'")[0]
-        tree_depth = int(np.mean(max_depths))
-        tree_nodes = int(np.mean(n_nodes))
-        txt_avg = "on average"
+        # how deep
+        print(f"\n ----- {estimator_name} -----")
+        print(f"   has on average {int(np.mean(n_nodes))} nodes")
+        print(f"   has on average a maximum depth of {int(np.mean(max_depths))}\n")
+
+    # --- Decision Tree ---------------
+    if estimator_name == "DecisionTreeClassifier":
+        max_depth = estimator.tree_.max_depth
+        n_nodes = estimator.tree_.node_count
 
         # how deep
-        print(
-            f'"{tree_name}" has {tree_nodes} nodes {txt_avg} with \
-                maximum depth {tree_depth} {txt_avg}.'
-        )
+        print(f"\n ----- {estimator_name} -----")
+        print(f"   has on average {int(np.mean(n_nodes))} nodes")
+        print(f"   has on average a maximum depth of {int(np.mean(max_depth))}\n")
 
 
-# create report for predictions --------------------
+# create report for predictions -----------------------------------------------
 def report(
     y_train=None,
     y_train_pred=None,
@@ -181,72 +169,77 @@ def report(
     line = "-" * 20
     cm_cmap = sns.light_palette("seagreen", as_cmap=True)
 
+    nfig = 0
+    nfig = nfig + 1 if y_train_pred is not None else nfig
+    nfig = nfig + 1 if y_test_pred is not None else nfig
+    nfig = nfig + 1 if (y_train_proba is not None or y_test_proba is not None) else nfig
+
+    if nfig > 0:
+        _, ax = plt.subplots(nrows=1, ncols=nfig, figsize=(4 * nfig, 4))
+        cf = 1
+
     # classification report
-    if y_train is not None:
+    if y_train_pred is not None:
         print(line + " classification report for 'Train' " + line)
         print(classification_report(y_train, y_train_pred, digits=3))
         print(f"f(0.5)-score: {fbeta_score(y_train, y_train_pred, beta=0.5):.3f}")
         print(f"f(2.0)-score: {fbeta_score(y_train, y_train_pred, beta=2):.3f}\n")
-    if y_test is not None:
+    if y_test_pred is not None:
         print(line + " classification report for 'Test' " + line)
         print(classification_report(y_test, y_test_pred, digits=3))
         print(f"f(0.5)-score: {fbeta_score(y_test, y_test_pred, beta=0.5):.3f}")
         print(f"f(2.0)-score: {fbeta_score(y_test, y_test_pred, beta=2):.3f}\n")
 
     # confusion matrix
-    if y_train is not None or y_test is not None:
-        plt.figure(figsize=(10, 4))
-
-        if y_train is not None:  # train set
-            plt.subplot(1, 2, 1)
+    if y_train_pred is not None or y_test_pred is not None:
+        if y_train_pred is not None:  # train set
+            plt.subplot(1, nfig, cf)
             sns.heatmap(
                 confusion_matrix(y_train, y_train_pred),
                 annot=True,
                 cmap=cm_cmap,
                 fmt="g",
+                cbar=False,
             )
             plt.title("Confusion Matrix for Train")
             plt.xlabel("Predicted")
             plt.ylabel("Actual")
-        if y_test is not None:  # test set
-            plt.subplot(1, 2, 2)
+            ax[cf - 1].set_box_aspect(1)
+            cf += 1
+        if y_test_pred is not None:  # test set
+            plt.subplot(1, nfig, cf)
             sns.heatmap(
-                confusion_matrix(y_test, y_test_pred), annot=True, cmap=cm_cmap, fmt="g"
+                confusion_matrix(y_test, y_test_pred),
+                annot=True,
+                cmap=cm_cmap,
+                fmt="g",
+                cbar=False,
             )
             plt.title("Confusion Matrix for Test")
             plt.xlabel("Predicted")
             plt.ylabel("Actual")
-
-        plt.tight_layout()
-        plt.show()
+            ax[cf - 1].set_box_aspect(1)
+            cf += 1
 
     # ROC curve
     if y_train_proba is not None or y_test_proba is not None:
-        plt.figure(figsize=(5, 5))
-        ax = plt.gca()
-        ax.set_aspect("equal", "box")
+        ax[cf - 1].set_aspect("equal", "box")
 
         if y_train_proba is not None:
-            print(line * 3)
-            print(
-                f"'Train': ROC AUC score = {round(roc_auc_score(y_train, y_train_pred),3)}"
-            )
             fpr, tpr, _ = roc_curve(y_train, y_train_pred)
             auc = round(roc_auc_score(y_train, y_train_pred), 3)
             RocCurveDisplay(fpr=fpr, tpr=tpr, roc_auc=auc, estimator_name="Train").plot(
-                ax
+                ax[cf - 1]
             )
         if y_test_proba is not None:
-            print(
-                f"'Test': ROC AUC score = {round(roc_auc_score(y_test, y_test_pred),3)}"
-            )
             fpr, tpr, _ = roc_curve(y_test, y_test_pred)
             auc = round(roc_auc_score(y_test, y_test_pred), 3)
             RocCurveDisplay(fpr=fpr, tpr=tpr, roc_auc=auc, estimator_name="Test").plot(
-                ax
+                ax[cf - 1]
             )
 
-        plt.show()
+    plt.tight_layout()
+    plt.show()
 
 
 # -----------------------------------------------------------------------------
@@ -315,3 +308,419 @@ def learning(
 
     # tidy up
     plt.tight_layout()
+
+
+# -----------------------------------------------------------------------------
+def error_compare_models(inp, X_test, y_test, proba: bool = True):
+    # ----- prepare df containing prediction results -----
+    scores = ["accuracy", "recall", "precision", "f1", "f2"]
+    y = y_test.to_frame()
+    y["img"] = [int(i.split("_")[1]) for i in y.index]
+
+    for name, model in inp.items():
+        y[name + "_pred"] = model.predict(X_test)
+        if proba:
+            proba_test = model.predict_proba(X_test)
+            y[name + "_proba"] = proba_test[:, 1]
+
+    # ----- calculate model statistics -----
+    mdl_stats = pd.DataFrame(index=inp.keys())
+    for name, model in inp.items():
+        # scores
+        mdl_stats.loc[name, "accuracy"] = accuracy_score(y["asd"], y[name + "_pred"])
+        mdl_stats.loc[name, "recall"] = recall_score(y["asd"], y[name + "_pred"])
+        mdl_stats.loc[name, "precision"] = precision_score(y["asd"], y[name + "_pred"])
+        mdl_stats.loc[name, "f1"] = f1_score(y["asd"], y[name + "_pred"])
+        mdl_stats.loc[name, "f2"] = fbeta_score(y["asd"], y[name + "_pred"], beta=2)
+
+    # ----- calculate image statistics -----
+    img_stats = pd.DataFrame(index=y["img"].unique())
+    img_stats.sort_index(inplace=True)
+
+    for name, model in inp.items():
+        for img in y["img"].unique():
+            # get data for this img
+            _ = y[y["img"] == img]
+
+            # scores
+            img_stats.loc[img, name + "_accuracy"] = accuracy_score(
+                _["asd"], _[name + "_pred"]
+            )
+            img_stats.loc[img, name + "_recall"] = recall_score(
+                _["asd"], _[name + "_pred"]
+            )
+            img_stats.loc[img, name + "_precision"] = precision_score(
+                _["asd"], _[name + "_pred"]
+            )
+            img_stats.loc[img, name + "_f1"] = f1_score(_["asd"], _[name + "_pred"])
+            img_stats.loc[img, name + "_f2"] = fbeta_score(
+                _["asd"], _[name + "_pred"], beta=2
+            )
+
+    # --------------- GENERAL MODEL OVERVIEW ------------------------------
+    _, axarr = plt.subplots(1, len(scores), figsize=(10, 2))
+    for i, score in enumerate(scores):
+        ix = np.unravel_index(i, axarr.shape)
+
+        clrs = [
+            "#ff3f3f" if i == np.argmax(mdl_stats[score]) else "#7A76C2"
+            for i in range(mdl_stats.shape[0])
+        ]
+
+        # barplot
+        sns.barplot(
+            data=mdl_stats,
+            x=mdl_stats[score],
+            y=mdl_stats.index,
+            hue=mdl_stats.index,
+            palette=clrs,
+            ax=axarr[ix],
+        )
+        axarr[ix].set(xlim=(0, 1), ylabel="")
+
+    plt.tight_layout()
+
+    # --------------- DETAILLED MODEL OVERVIEW ------------------------------
+    for name, model in inp.items():
+        fig, axarr = plt.subplots(2, 3, figsize=(10, 10))
+        fig.suptitle(name)
+
+        # a) distribution of proba -----
+        axi = 0
+        ix = np.unravel_index(axi, axarr.shape)
+        if proba:
+            sns.histplot(
+                data=y,
+                x=name + "_proba",
+                hue="asd",
+                bins=50,
+                kde=True,
+                line_kws=dict(linewidth=3),
+                ax=axarr[ix],
+            )
+            axarr[ix].vlines(0.5, 0, axarr[ix].get_ylim()[1], colors="k")
+            axarr[ix].legend(
+                labels=["ASD", "TD"], frameon=True, fancybox=True, facecolor="w"
+            )
+        else:
+            axarr[ix].set_axis_off()
+
+        # b) loop metrics -----
+        for score in scores:
+            mdl_score = name + "_" + score
+
+            axi += 1
+            ix = np.unravel_index(axi, axarr.shape)
+
+            # define colors for bars - depending on their rank
+            top_10 = img_stats.nlargest(10, mdl_score)
+            top_3 = img_stats.nlargest(3, mdl_score)
+            clrs = []
+            for i in img_stats.index:
+                if i in top_3.index:
+                    clrs.append("#ff3f3f")
+                elif i in top_10.index:
+                    clrs.append("#fab95d")
+                else:
+                    clrs.append("#86859b")
+
+            # barplot
+            sns.barplot(
+                data=img_stats,
+                x=img_stats[mdl_score],
+                y=img_stats.index.astype(str),
+                hue=img_stats.index,
+                legend=False,
+                palette=clrs,
+                ax=axarr[ix],
+            )
+            axarr[ix].set_ylabel("image")
+
+        plt.tight_layout()
+
+    # --------------- SINGLE IMAGE - MODEL COMPARISONS ------------------------------
+    all_images = sorted(y["img"].unique())
+    n_cols = 1 + len(scores)
+    _, axarr = plt.subplots(
+        len(all_images), n_cols, figsize=(3 * n_cols, 2.5 * len(all_images))
+    )
+
+    # loop images
+    for ii, img in tqdm(enumerate(all_images)):
+        # 0) ----- image -----
+        ix = np.unravel_index(n_cols * ii, axarr.shape)
+        loaded_img = iio.imread(
+            os.path.join(
+                "..",
+                "data",
+                "Saliency4ASD",
+                "TrainingData",
+                "Images",
+                f"{int(img)}.png",
+            )
+        )
+
+        axarr[ix].imshow(loaded_img)
+        axarr[ix].grid(False)
+        axarr[ix].set_title(f"{int(img)}.png")
+        axarr[ix].tick_params(labelleft=False, labelbottom=False)
+
+        # 1-5) scores
+        for i, score in enumerate(scores):
+            ix = np.unravel_index(n_cols * ii + i + 1, axarr.shape)
+
+            cols = [c for c in img_stats.columns if score in c]
+            names = [
+                "_".join(c.split("_")[0:-1]) for c in img_stats.columns if score in c
+            ]
+
+            clrs = [
+                "#ff3f3f" if i == np.argmax(img_stats.loc[img, cols]) else "#7A76C2"
+                for i, _ in enumerate(img_stats.loc[img, cols])
+            ]
+
+            # barplot
+            sns.barplot(
+                x=img_stats[cols].loc[img],
+                y=img_stats[cols].columns,
+                hue=img_stats[cols].columns,
+                palette=clrs,
+                ax=axarr[ix],
+            )
+            axarr[ix].set_xlim(0, 1)
+            axarr[ix].set(ylabel="", xlabel=score, yticks=list(range(len(inp))), yticklabels=names)
+            if i > 0:
+                axarr[ix].set_yticklabels([])
+
+    plt.tight_layout()
+
+
+# -----------------------------------------------------------------------------
+def error_images(y_test, pred_test, proba_test):
+    # ----- prepare df containing prediction results -----
+    y = y_test.to_frame()
+    y["img"] = [int(i.split("_")[1]) for i in y.index]
+    y["pred"] = pred_test
+    y["proba"] = proba_test[:, 1]
+    y["error"] = ut.code_ytype(y_test, pred_test)
+
+    # ----- calculate image statistics -----
+    img_stats = pd.DataFrame(index=y["img"].unique())
+    img_stats.sort_index(inplace=True)
+    scores = ["acc", "recall", "precision", "f1", "f2"]
+
+    for img in y["img"].unique():
+        # get data for this img
+        _ = y[y["img"] == img]
+
+        # scores
+        img_stats.loc[img, "acc"] = accuracy_score(_["asd"], _["pred"])
+        img_stats.loc[img, "recall"] = recall_score(_["asd"], _["pred"])
+        img_stats.loc[img, "precision"] = precision_score(_["asd"], _["pred"])
+        img_stats.loc[img, "f1"] = f1_score(_["asd"], _["pred"])
+        img_stats.loc[img, "f2"] = fbeta_score(_["asd"], _["pred"], beta=2)
+
+    # --------------- GENERAL OVERVIEW ------------------------------
+    _, axarr = plt.subplots(2, 3, figsize=(10, 10))
+
+    # a) distribution of proba -----
+    axi = 0
+    ix = np.unravel_index(axi, axarr.shape)
+    if proba_test is not None:
+        sns.histplot(
+            data=y,
+            x="proba",
+            hue="asd",
+            bins=50,
+            kde=True,
+            line_kws=dict(linewidth=3),
+            ax=axarr[ix],
+        )
+        axarr[ix].vlines(0.5, 0, axarr[ix].get_ylim()[1], colors="k")
+        axarr[ix].legend(
+            labels=["ASD", "TD"], frameon=True, fancybox=True, facecolor="w"
+        )
+    else:
+        axarr[ix].set_axis_off()
+
+    # b) loop metrics -----
+    for score in scores:
+        axi += 1
+        ix = np.unravel_index(axi, axarr.shape)
+
+        # define colors for bars - depending on their rank
+        top_10 = img_stats.nlargest(10, score)
+        top_3 = img_stats.nlargest(3, score)
+        clrs = []
+        for i in img_stats.index:
+            if i in top_3.index:
+                clrs.append("#ff3f3f")
+            elif i in top_10.index:
+                clrs.append("#fab95d")
+            else:
+                clrs.append("#86859b")
+
+        # barplot
+        sns.barplot(
+            data=img_stats,
+            x=img_stats[score],
+            y=img_stats.index.astype(str),
+            hue=img_stats.index,
+            legend=False,
+            palette=clrs,
+            ax=axarr[ix],
+        )
+        axarr[ix].set_ylabel("image")
+
+    plt.tight_layout()
+
+    # --------------- SINGLE IMAGE RESULTS ------------------------------
+    all_images = sorted(y["img"].unique())
+    n_cols = 4 if proba_test is not None else 3
+    _, axarr = plt.subplots(
+        len(all_images), n_cols, figsize=(3 * n_cols, 3 * len(all_images))
+    )
+
+    # loop images
+    for ii, img in tqdm(enumerate(all_images)):
+        img_df = y[y["img"] == img]
+
+        # 0) ----- image -----
+        ix = np.unravel_index(n_cols * ii, axarr.shape)
+        loaded_img = iio.imread(
+            os.path.join(
+                "..",
+                "data",
+                "Saliency4ASD",
+                "TrainingData",
+                "Images",
+                f"{int(img)}.png",
+            )
+        )
+
+        axarr[ix].imshow(loaded_img)
+        axarr[ix].grid(False)
+        axarr[ix].set_title(f"{int(img)}.png")
+        axarr[ix].tick_params(labelleft=False, labelbottom=False)
+
+        # 1) ----- confusion matrix -----
+        ix = np.unravel_index(n_cols * ii + 1, axarr.shape)
+        cm_cmap = sns.light_palette("seagreen", as_cmap=True)
+
+        sns.heatmap(
+            confusion_matrix(img_df["asd"], img_df["pred"]),
+            annot=True,
+            cmap=cm_cmap,
+            fmt="g",
+            cbar=False,
+            annot_kws={"fontsize": 20},
+            xticklabels=["TD", "ASD"],
+            yticklabels=["TD", "ASD"],
+            ax=axarr[ix],
+        )
+        axarr[ix].set_box_aspect(1)
+        axarr[ix].set_title("Conf. Matrix for Test Image")
+        axarr[ix].set_xlabel("Predicted")
+        axarr[ix].set_ylabel("Actual")
+
+        # 2) ----- scores -----
+        clrs = ["#ff3f3f" if i > 0.8 else "#7A76C2" for i in img_stats.loc[img]]
+
+        ix = np.unravel_index(n_cols * ii + 2, axarr.shape)
+        sns.barplot(
+            x=img_stats.columns,
+            y=img_stats.loc[img],
+            hue=img_stats.columns,
+            palette=clrs,
+            ax=axarr[ix],
+        )
+        axarr[ix].set_ylabel("score")
+        axarr[ix].set_ylim(0, 1)
+
+        # 3) ----- probabilities -----
+        if proba_test is not None:
+            ix = np.unravel_index(n_cols * ii + 3, axarr.shape)
+            axarr[ix].vlines(0.5, -0.4, 1.4, colors="k")
+            sns.scatterplot(
+                data=img_df,
+                x="proba",
+                y="asd",
+                hue="asd",
+                s=100,
+                legend=False,
+                ax=axarr[ix],
+            )
+            sns.kdeplot(
+                data=img_df,
+                x="proba",
+                hue="asd",
+                legend=False,
+                ax=axarr[ix],
+            )
+            axarr[ix].set(
+                xlim=(0, 1),
+                yticks=[0, 1],
+                yticklabels=["TD", "ASD"],
+                ylabel="",
+                xlabel="probability",
+            )
+
+    plt.tight_layout()
+
+
+# -----------------------------------------------------------------------------
+def feat_importance(
+    model,
+    X_train,
+    y_train,
+    X_test,
+    y_test,
+    n_reps: int = 20,
+    RSEED: int = 42,
+    n_jobs: int = -1,
+):
+    # calculate permutation importance for training data
+    result_train = permutation_importance(
+        model, X_train, y_train, n_repeats=n_reps, random_state=RSEED, n_jobs=n_jobs
+    )
+    sorted_importances_idx_train = result_train.importances_mean.argsort()
+    importances_train = pd.DataFrame(
+        result_train.importances[sorted_importances_idx_train].T,
+        columns=X_train.columns[sorted_importances_idx_train],
+    )
+
+    # calculate permutation importance for test data
+    result_test = permutation_importance(
+        model, X_test, y_test, n_repeats=n_reps, random_state=RSEED, n_jobs=n_jobs
+    )
+    sorted_importances_idx_test = result_test.importances_mean.argsort()
+    importances_test = pd.DataFrame(
+        result_test.importances[sorted_importances_idx_test].T,
+        columns=X_test.columns[sorted_importances_idx_test],
+    )
+
+    # figure
+    _, axs = plt.subplots(1, 2, figsize=(15, 6))
+    importances_train.plot.box(vert=False, whis=10, ax=axs[0])
+    axs[0].set_title("Permutation Importances - Train Set")
+    axs[0].axvline(x=0, color="k", linestyle="--")
+    axs[0].set_xlabel("Decrease in accuracy score")
+    axs[0].figure.tight_layout()
+
+    importances_test.plot.box(vert=False, whis=10, ax=axs[1])
+    axs[1].set_title("Permutation Importances - Test Set")
+    axs[1].axvline(x=0, color="k", linestyle="--")
+    axs[1].set_xlabel("Decrease in accuracy score")
+    axs[1].figure.tight_layout()
+
+
+# --- if script is run by it's own --------------------------------------------
+if __name__ == "__main__":
+    # set file & folder name
+    folder_name = "RF_grid"
+    model_name = "RF_grid_v1_full.pickle"
+
+    # # fit or load
+    # grid_search_rf = fit_or_load(
+    #     None, X_train, y_train, model_name, folder=folder_name
+    # )
