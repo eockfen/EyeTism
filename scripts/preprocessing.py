@@ -108,7 +108,7 @@ def split(X: pd.DataFrame, y: pd.DataFrame, test_set: list = []):
         ]
 
     # create comparison string
-    cmp = "_" + "_|_".join([str(i) for i in test_set]) + "_"
+    cmp = "_" + "_|_".join([f"{i:03.0f}" for i in test_set]) + "_"
 
     # find indices of test set
     idx = X.index.str.contains(cmp)
