@@ -6,6 +6,12 @@ import numpy as np
 import imageio.v3 as iio
 
 
+def code_ytype(y_true, y_pred):
+    dct = {"00": "TN", "10": "FN", "01": "FP", "11": "TP"}
+    df = pd.DataFrame({"ytype": y_true.astype(str) + y_pred.astype(str)})
+    return df["ytype"].apply(lambda x: dct[x])
+
+
 def get_sp_id(sp_file: str, sp_i: int) -> str:
     """get id for given scanpath file and scanpath_index
 
