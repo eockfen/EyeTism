@@ -96,7 +96,7 @@ def fit_or_load(
 
 
 # print some information about the model given --------------------------------
-def model_info(model):
+def model_info(estimator):
     """Displays some information about the (fitted!) model given.
 
     Args:
@@ -104,7 +104,7 @@ def model_info(model):
     """
 
     # model name
-    estimator_name = model.__class__.__name__
+    estimator_name = estimator.__class__.__name__
 
     # --- GridSearch or RandomizedSearch ---------------
     if estimator_name in ["GridSearchCV", "RandomizedSearchCV"]:
@@ -113,12 +113,12 @@ def model_info(model):
         #    print(" ----- parameter: -----")
         #    pprint.PrettyPrinter(width=20).pprint(model.get_params())
         print("\n ----- best estimator: -----")
-        pprint.PrettyPrinter(width=20).pprint(model.best_estimator_)
+        pprint.PrettyPrinter(width=20).pprint(estimator.best_estimator_)
         print("\n ----- best parameter: -----")
-        pprint.PrettyPrinter(width=20).pprint(model.best_params_)
+        pprint.PrettyPrinter(width=20).pprint(estimator.best_params_)
 
-        estimator_name = model.estimator.steps[-1][-1].__class__.__name__
-        estimator = model.best_estimator_.steps[-1][-1]
+        estimator_name = estimator.estimator.steps[-1][-1].__class__.__name__
+        estimator = estimator.best_estimator_.steps[-1][-1]
 
     # --- Random Forest ---------------
     if estimator_name == "RandomForestClassifier":
@@ -276,7 +276,7 @@ def learning(
     common_params = {
         "X": X,
         "y": y,
-        "train_sizes": np.linspace(0.1, 1.0, 5),
+        "train_sizes": np.linspace(0.1, 1.0, 9),
         "cv": ShuffleSplit(n_splits=cv, test_size=0.2, random_state=0),
         "score_type": "both",
         "line_kw": {"marker": "o"},
