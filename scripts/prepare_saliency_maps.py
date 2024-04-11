@@ -182,9 +182,6 @@ def individual_fixation_maps(path_im, kind=None, sal_mdl=None, redo: bool = Fals
 
     # loop sp files
     for sp_file in tqdm(sp_files):
-        if sp_file != sp_files[0]:
-            continue
-
         # get size of image
         img_file = ut.get_img_of_sp(sp_file)
         image_size = iio.imread(img_file).shape[0:2]
