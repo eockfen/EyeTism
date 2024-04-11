@@ -163,7 +163,7 @@ def search_SAM_predictions(path_ref, path_pred, redo: bool = False):
 
 
 def individual_fixation_maps(path_im, kind=None, sal_mdl=None, redo: bool = False):
-    sal_name = {"dg": "DeepGazeIIE", "sam": "sam_resnet", "sam_vgg": "sam_vgg"}
+    sal_name = {"dg": "DeepGazeIIE", "sam_resnet": "sam_resnet", "sam_vgg": "sam_vgg"}
 
     # check params
     kind = "fix" if kind is None else kind
