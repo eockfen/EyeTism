@@ -16,3 +16,4 @@ tensorflow-metal==1.1.0
 tensorflow-hub==0.16.1
 torchvision==0.16.1
 transformers==4.39.1
+xgboost==2.0.3
