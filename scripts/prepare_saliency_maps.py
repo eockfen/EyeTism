@@ -162,10 +162,20 @@ def search_SAM_predictions(path_ref, path_pred, redo: bool = False):
         return print("... something went wrong searching for SAM saliency maps")
 
 
-def individual_fixation_maps(path_esm, redo: bool = False):
+def individual_fixation_maps(path_im, kind=None, sal_mdl=None, redo: bool = False):
+    sal_name = {"dg": "DeepGazeIIE", "sam_resnet": "sam_resnet", "sam_vgg": "sam_vgg"}
+
+    # check params
+    kind = "fix" if kind is None else kind
+    sal_mdl = "dg" if sal_mdl is None else sal_mdl
+
     # check folders
-    if not os.path.exists(path_esm):
-        os.makedirs(path_esm)
+    path = os.path.join(path_im, kind)
+    if kind == "sal":
+        path = path + "_" + sal_mdl
+
+    if not os.path.exists(path):
+        os.makedirs(path)
 
     # get files
     sp_files = ut.get_sp_files()
@@ -176,27 +186,55 @@ def individual_fixation_maps(path_esm, redo: bool = False):
         img_file = ut.get_img_of_sp(sp_file)
         image_size = iio.imread(img_file).shape[0:2]
 
+        # load SALIENCY PREDICTION map
+        if kind == "sal":
+            sal_map = ut.load_saliency_map(sp_file, sal_name[sal_mdl])
+
         # loop scanpaths
         sps = ut.load_scanpath(sp_file)
         for sp_i, sp in enumerate(sps):
             # file to write
             id = ut.get_sp_id(sp_file, sp_i)
-            ftw = os.path.join(path_esm, f"{id}.jpg")
+            ftw = os.path.join(path, f"{id}.jpg")
 
             # check if already done / or / redo==True
             if os.path.isfile(ftw) and not redo:
                 continue
 
-            # individual fixation map
-            ifm = np.zeros(image_size)
-            ifm[(sp["y"].astype(int) - 1, sp["x"].astype(int) - 1)] = 1
-            ndimage.gaussian_filter(ifm, sigma=40, output=ifm)
+            match kind:
+                case "fix":
+                    # individual fixation map
+                    ifm = np.zeros(image_size)
+                    ifm[(sp["y"].astype(int) - 1, sp["x"].astype(int) - 1)] = 1
+                    ndimage.gaussian_filter(ifm, sigma=40, output=ifm)
+
+                case "dur":
+                    # individual fixation map
+                    ifm = np.zeros(image_size)
+                    ifm[(sp["y"].astype(int) - 1, sp["x"].astype(int) - 1)] = sp[
+                        "duration"
+                    ].astype(int)
+                    ndimage.gaussian_filter(ifm, sigma=40, output=ifm)
+
+                case "sal":
+                    # individual fixation map
+                    ifm = np.zeros(image_size)
+                    sal_values = sal_map[
+                        (sp["y"].astype(int) - 1, sp["x"].astype(int) - 1)
+                    ]
+                    ifm[(sp["y"].astype(int) - 1, sp["x"].astype(int) - 1)] = (
+                        sal_values.astype(int)
+                    )
+                    ndimage.gaussian_filter(ifm, sigma=40, output=ifm)
 
             # scale to interval [0 - 254]
-            ifm = ifm / ifm.max() * 254
+            if ifm.max() != 0:
+                ifm = ifm / ifm.max() * 254
 
             # write
             iio.imwrite(ftw, ifm.astype(np.uint8))
+
+    print(f"... done creating '{kind}' maps.")
 
 
 if __name__ == "__main__":
@@ -209,11 +247,11 @@ if __name__ == "__main__":
         ref_images = os.path.join(data, "Saliency4ASD", "TrainingData", "Images")
         sal_predictions = os.path.join(curdir, "..", "saliency_predictions")
         sal_pred_deepgaze = os.path.join(sal_predictions, "DeepGazeIIE")
-        ifm = os.path.join(data, "Saliency4ASD", "TrainingData", "Individual_FixMaps")
+        im = os.path.join(data, "Saliency4ASD", "TrainingData", "Individual_Maps")
 
         # check args
         redo = False
-        if len(sys.argv) > 2 and sys.argv[2] == "1":
+        if len(sys.argv) > 2 and "--redo" in sys.argv[2:]:
             redo = True
 
         # do what have to be done
@@ -224,9 +262,16 @@ if __name__ == "__main__":
                 search_SAM_predictions(ref_images, sal_predictions, redo=redo)
 
             case "IFM":  # Individual Fixation Maps
+                # set default kind
+                kind = None
+                if len(sys.argv) > 2 and "--redo" not in sys.argv[2]:
+                    kind = sys.argv[2]
+                sal_mdl = None
+                if len(sys.argv) > 3 and "--redo" not in sys.argv[3]:
+                    sal_mdl = sys.argv[3]
                 # run
                 print(" -> creating individual fixation maps")
-                individual_fixation_maps(ifm, redo=redo)
+                individual_fixation_maps(im, kind=kind, sal_mdl=sal_mdl, redo=redo)
 
             case "DG":  # DeepGaze IIE saliency maps
                 # run
