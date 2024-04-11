@@ -171,7 +171,7 @@ def individual_fixation_maps(path_im, kind=None, sal_mdl=None, redo: bool = Fals
 
     # check folders
     path = os.path.join(path_im, kind)
-    if kind == "sal":
+    if kind in ["sal", "rgb"]:
         path = path + "_" + sal_mdl
 
     if not os.path.exists(path):
@@ -187,7 +187,7 @@ def individual_fixation_maps(path_im, kind=None, sal_mdl=None, redo: bool = Fals
         image_size = iio.imread(img_file).shape[0:2]
 
         # load SALIENCY PREDICTION map
-        if kind == "sal":
+        if kind in ["sal", "rgb"]:
             sal_map = ut.load_saliency_map(sp_file, sal_name[sal_mdl])
 
         # loop scanpaths
@@ -208,28 +208,65 @@ def individual_fixation_maps(path_im, kind=None, sal_mdl=None, redo: bool = Fals
                     ifm[(sp["y"].astype(int) - 1, sp["x"].astype(int) - 1)] = 1
                     ndimage.gaussian_filter(ifm, sigma=40, output=ifm)
 
+                    # scale to interval [0 - 254]
+                    if ifm.max() != 0:
+                        ifm = ifm / ifm.max() * 254
+
                 case "dur":
-                    # individual fixation map
+                    # individual duration map
                     ifm = np.zeros(image_size)
                     ifm[(sp["y"].astype(int) - 1, sp["x"].astype(int) - 1)] = sp[
                         "duration"
                     ].astype(int)
                     ndimage.gaussian_filter(ifm, sigma=40, output=ifm)
 
+                    # scale to interval [0 - 254]
+                    if ifm.max() != 0:
+                        ifm = ifm / ifm.max() * 254
+
                 case "sal":
-                    # individual fixation map
+                    # individual saliency map
                     ifm = np.zeros(image_size)
-                    sal_values = sal_map[
+                    ifm[(sp["y"].astype(int) - 1, sp["x"].astype(int) - 1)] = sal_map[
                         (sp["y"].astype(int) - 1, sp["x"].astype(int) - 1)
                     ]
-                    ifm[(sp["y"].astype(int) - 1, sp["x"].astype(int) - 1)] = (
-                        sal_values.astype(int)
-                    )
                     ndimage.gaussian_filter(ifm, sigma=40, output=ifm)
 
-            # scale to interval [0 - 254]
-            if ifm.max() != 0:
-                ifm = ifm / ifm.max() * 254
+                    # scale to interval [0 - 254]
+                    if ifm.max() != 0:
+                        ifm = ifm / ifm.max() * 254
+
+                case "rgb":
+                    # individual fixation map
+                    i_f = np.zeros(image_size)
+                    i_f[(sp["y"].astype(int) - 1, sp["x"].astype(int) - 1)] = 1
+                    ndimage.gaussian_filter(i_f, sigma=40, output=i_f)
+
+                    if i_f.max() != 0:
+                        i_f = i_f / i_f.max() * 254
+
+                    # individual duration map
+                    i_d = np.zeros(image_size)
+                    i_d[(sp["y"].astype(int) - 1, sp["x"].astype(int) - 1)] = sp[
+                        "duration"
+                    ].astype(int)
+                    ndimage.gaussian_filter(i_d, sigma=40, output=i_d)
+
+                    if i_d.max() != 0:
+                        i_d = i_d / i_d.max() * 254
+
+                    # individual saliency map
+                    i_s = np.zeros(image_size)
+                    i_s[(sp["y"].astype(int) - 1, sp["x"].astype(int) - 1)] = sal_map[
+                        (sp["y"].astype(int) - 1, sp["x"].astype(int) - 1)
+                    ]
+                    ndimage.gaussian_filter(i_s, sigma=40, output=i_s)
+
+                    if i_s.max() != 0:
+                        i_s = i_s / i_s.max() * 254
+
+                    # concat all the images to 3-channel-image
+                    ifm = np.dstack((i_f, i_d, i_s))
 
             # write
             iio.imwrite(ftw, ifm.astype(np.uint8))
