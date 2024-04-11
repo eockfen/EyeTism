@@ -3,7 +3,7 @@ import os
 from sklearn.ensemble import StackingClassifier
 from sklearn.linear_model import LogisticRegression
 
-def load_models(model_folder="testing", model_names=["xgb_model.pkl", "rf_model.pkl", "svc_model.pkl"]):
+def load_models(model_folder="testing", model_names=["xgb_model.pickle", "rf_model.pickle", "svc_model.pickle"]):
     models = dict()
     
     for model_name in model_names:
