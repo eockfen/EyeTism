@@ -6,10 +6,9 @@ import utils as ut
 import time
 
 
-# load default style settings
+# setup vars, menu, style, and so on --------------------
+ut.init_vars()
 ut.default_style()
-
-# sidebar menu
 ut.create_menu()
 
 
@@ -65,16 +64,11 @@ def del_patient(x):
     return True
 
 
-# load df into db ---------------------------------------------
-DB = pd.read_csv(os.path.join("files", "patients.csv"))
-if "patient_db" not in st.session_state:
-    st.session_state.pat_db = DB
-if "edited_patient_db" not in st.session_state:
-    st.session_state.pat_db_update = DB.copy()
-
 # page style ---------------------------------------------
 st.title("Manage Patients")
-tab1, tab2, tab3 = st.tabs(["List Patients", "Edit Patients", "New Patient"])
+tab1, tab2, tab3 = st.tabs(
+    [s.center(18, "\u2001") for s in ["List Patients", "Edit Patients", "New Patient"]]
+)
 
 # list all patients ---------------------------------------------
 with tab1:
