@@ -1,6 +1,8 @@
 import streamlit as st
 import utils as ut
 
+st.set_page_config(layout="wide")
+
 # load default style settings
 ut.default_style()
 
