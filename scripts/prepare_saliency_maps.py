@@ -162,116 +162,134 @@ def search_SAM_predictions(path_ref, path_pred, redo: bool = False):
         return print("... something went wrong searching for SAM saliency maps")
 
 
-def individual_fixation_maps(path_im, kind=None, sal_mdl=None, redo: bool = False):
+def individual_fixation_maps(path_im, sal_mdl=None, redo: bool = False):
     sal_name = {"dg": "DeepGazeIIE", "sam_resnet": "sam_resnet", "sam_vgg": "sam_vgg"}
 
     # check params
-    kind = "fix" if kind is None else kind
     sal_mdl = "dg" if sal_mdl is None else sal_mdl
 
     # check folders
-    path = os.path.join(path_im, kind)
-    if kind in ["sal", "rgb"]:
-        path = path + "_" + sal_mdl
+    path_f = os.path.join(path_im, "fix")
+    path_d = os.path.join(path_im, "dur")
+    path_s = os.path.join(path_im, "sal" + "_" + sal_mdl)
+    path_3 = os.path.join(path_im, "rgb" + "_" + sal_mdl)
 
-    if not os.path.exists(path):
-        os.makedirs(path)
+    if not os.path.exists(path_f):
+        os.makedirs(path_f)
+    if not os.path.exists(path_d):
+        os.makedirs(path_d)
+    if not os.path.exists(path_s):
+        os.makedirs(path_s)
+    if not os.path.exists(path_3):
+        os.makedirs(path_3)
 
     # get files
-    sp_files = ut.get_sp_files()
+    sp_files = ut.get_sp_files(who="ASD")
+
+    # create ftw list
+    ftw_all_f = []
+    ftw_all_d = []
+    ftw_all_s = []
+    ftw_all_3 = []
+
+    # create empty 3d lists
+    ifm_all, idm_all, ism_all = [], [], []
+    ifm_max, idm_max, ism_max = [], [], []
 
     # loop sp files
-    for sp_file in tqdm(sp_files):
+    for sp_file_ASD in tqdm(sp_files):
+
+        # corresponding TD sp_file
+        sp_file_TD = sp_file_ASD.replace("ASD/ASD_", "TD/TD_")
+        sp_file = [sp_file_ASD, sp_file_TD]
+
         # get size of image
-        img_file = ut.get_img_of_sp(sp_file)
+        img_file = ut.get_img_of_sp(sp_file[0])
         image_size = iio.imread(img_file).shape[0:2]
 
         # load SALIENCY PREDICTION map
-        if kind in ["sal", "rgb"]:
-            sal_map = ut.load_saliency_map(sp_file, sal_name[sal_mdl])
+        sal_map = ut.load_saliency_map(sp_file[0], sal_name[sal_mdl])
 
-        # loop scanpaths
-        sps = ut.load_scanpath(sp_file)
-        for sp_i, sp in enumerate(sps):
-            # file to write
-            id = ut.get_sp_id(sp_file, sp_i)
-            ftw = os.path.join(path, f"{id}.jpg")
+        # create ftw list for these images
+        ftw_img_f = []
+        ftw_img_d = []
+        ftw_img_s = []
+        ftw_img_3 = []
 
-            # check if already done / or / redo==True
-            if os.path.isfile(ftw) and not redo:
-                continue
+        # instantiate empty images
+        ifm_img = np.zeros(list(image_size) + [0])
+        idm_img = np.zeros(list(image_size) + [0])
+        ism_img = np.zeros(list(image_size) + [0])
 
-            match kind:
-                case "fix":
-                    # individual fixation map
-                    ifm = np.zeros(image_size)
-                    ifm[(sp["y"].astype(int) - 1, sp["x"].astype(int) - 1)] = 1
-                    ndimage.gaussian_filter(ifm, sigma=40, output=ifm)
+        # loop ASD/TD
+        for spf in sp_file:
+            # loop scanpaths - ASD
+            sps = ut.load_scanpath(spf)
+            for sp_i, sp in enumerate(sps):
+                # file to write
+                id = ut.get_sp_id(spf, sp_i)
+                ftw_img_f.append(os.path.join(path_f, f"{id}.jpg"))
+                ftw_img_d.append(os.path.join(path_d, f"{id}.jpg"))
+                ftw_img_s.append(os.path.join(path_s, f"{id}.jpg"))
+                ftw_img_3.append(os.path.join(path_3, f"{id}.jpg"))
 
-                    # scale to interval [0 - 254]
-                    if ifm.max() != 0:
-                        ifm = ifm / ifm.max() * 254
+                # individual fixation map --------------------
+                ifm = np.zeros(image_size)
+                ifm[(sp["y"].astype(int) - 1, sp["x"].astype(int) - 1)] = 1
+                ndimage.gaussian_filter(ifm, sigma=40, output=ifm)
+                # stack
+                ifm_img = np.dstack((ifm_img, ifm))
 
-                case "dur":
-                    # individual duration map
-                    ifm = np.zeros(image_size)
-                    ifm[(sp["y"].astype(int) - 1, sp["x"].astype(int) - 1)] = sp[
-                        "duration"
-                    ].astype(int)
-                    ndimage.gaussian_filter(ifm, sigma=40, output=ifm)
+                # individual duration map --------------------
+                idm = np.zeros(image_size)
+                idm[(sp["y"].astype(int) - 1, sp["x"].astype(int) - 1)] = sp[
+                    "duration"
+                ].astype(int)
+                ndimage.gaussian_filter(idm, sigma=40, output=idm)
+                # stack
+                idm_img = np.dstack((idm_img, idm))
 
-                    # scale to interval [0 - 254]
-                    if ifm.max() != 0:
-                        ifm = ifm / ifm.max() * 254
+                # individual saliency map --------------------
+                ism = np.zeros(image_size)
+                ism[(sp["y"].astype(int) - 1, sp["x"].astype(int) - 1)] = sal_map[
+                    (sp["y"].astype(int) - 1, sp["x"].astype(int) - 1)
+                ]
+                ndimage.gaussian_filter(ism, sigma=40, output=ism)
+                # stack
+                ism_img = np.dstack((ism_img, ism))
 
-                case "sal":
-                    # individual saliency map
-                    ifm = np.zeros(image_size)
-                    ifm[(sp["y"].astype(int) - 1, sp["x"].astype(int) - 1)] = sal_map[
-                        (sp["y"].astype(int) - 1, sp["x"].astype(int) - 1)
-                    ]
-                    ndimage.gaussian_filter(ifm, sigma=40, output=ifm)
+        # append _img_ to _all_
+        ftw_all_f.append(ftw_img_f)
+        ftw_all_d.append(ftw_img_d)
+        ftw_all_s.append(ftw_img_s)
+        ftw_all_3.append(ftw_img_3)
+        ifm_all.append(ifm_img)
+        idm_all.append(idm_img)
+        ism_all.append(ism_img)
 
-                    # scale to interval [0 - 254]
-                    if ifm.max() != 0:
-                        ifm = ifm / ifm.max() * 254
+        # append max value of image
+        ifm_max.append(ifm_img.max())
+        idm_max.append(idm_img.max())
+        ism_max.append(ism_img.max())
 
-                case "rgb":
-                    # individual fixation map
-                    i_f = np.zeros(image_size)
-                    i_f[(sp["y"].astype(int) - 1, sp["x"].astype(int) - 1)] = 1
-                    ndimage.gaussian_filter(i_f, sigma=40, output=i_f)
+    print("... now wait for all images to be scaled and written to a jpg...")
+    # loop images
+    for i in range(len(ftw_all_f)):
+        # loop participants within image
+        for p in range(len(ftw_all_f[i])):
+            # get wanted image to write
+            itw_f = ifm_all[i][:, :, p] / max(ifm_max) * 254
+            itw_d = idm_all[i][:, :, p] / max(idm_max) * 254
+            itw_s = ism_all[i][:, :, p] / max(ism_max) * 254
+            itw_3 = np.dstack((itw_f, itw_d, itw_s))
 
-                    if i_f.max() != 0:
-                        i_f = i_f / i_f.max() * 254
+            # write image
+            iio.imwrite(ftw_all_f[i][p], itw_f.astype(np.uint8))
+            iio.imwrite(ftw_all_d[i][p], itw_d.astype(np.uint8))
+            iio.imwrite(ftw_all_s[i][p], itw_s.astype(np.uint8))
+            iio.imwrite(ftw_all_3[i][p], itw_3.astype(np.uint8))
 
-                    # individual duration map
-                    i_d = np.zeros(image_size)
-                    i_d[(sp["y"].astype(int) - 1, sp["x"].astype(int) - 1)] = sp[
-                        "duration"
-                    ].astype(int)
-                    ndimage.gaussian_filter(i_d, sigma=40, output=i_d)
-
-                    if i_d.max() != 0:
-                        i_d = i_d / i_d.max() * 254
-
-                    # individual saliency map
-                    i_s = np.zeros(image_size)
-                    i_s[(sp["y"].astype(int) - 1, sp["x"].astype(int) - 1)] = sal_map[
-                        (sp["y"].astype(int) - 1, sp["x"].astype(int) - 1)
-                    ]
-                    ndimage.gaussian_filter(i_s, sigma=40, output=i_s)
-
-                    if i_s.max() != 0:
-                        i_s = i_s / i_s.max() * 254
-
-                    # concat all the images to 3-channel-image
-                    ifm = np.dstack((i_f, i_d, i_s))
-
-            # write
-            iio.imwrite(ftw, ifm.astype(np.uint8))
-
-    print(f"... done creating '{kind}' maps.")
+    print("... done creating 'all' maps.")
 
 
 if __name__ == "__main__":
@@ -299,16 +317,12 @@ if __name__ == "__main__":
                 search_SAM_predictions(ref_images, sal_predictions, redo=redo)
 
             case "IFM":  # Individual Fixation Maps
-                # set default kind
-                kind = None
-                if len(sys.argv) > 2 and "--redo" not in sys.argv[2]:
-                    kind = sys.argv[2]
                 sal_mdl = None
                 if len(sys.argv) > 3 and "--redo" not in sys.argv[3]:
                     sal_mdl = sys.argv[3]
                 # run
                 print(" -> creating individual fixation maps")
-                individual_fixation_maps(im, kind=kind, sal_mdl=sal_mdl, redo=redo)
+                individual_fixation_maps(im, sal_mdl=sal_mdl, redo=redo)
 
             case "DG":  # DeepGaze IIE saliency maps
                 # run
