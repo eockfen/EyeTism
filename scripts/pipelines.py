@@ -63,3 +63,4 @@ with open("..", "models/RF_final/RF_final.pkl", "rb") as f:
 #load xgb model
 with open("..", "models/xgb_final/xgb_final_new.pkl", "rb") as f:
     xgb_model = pickle.load(f)
+
