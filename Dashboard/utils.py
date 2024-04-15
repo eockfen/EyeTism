@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 import glob
 import os
+import datetime
 
 
 # initialize session_state variabled ------------------------------------------
@@ -17,6 +18,31 @@ def init_vars():
         st.session_state.pat_db = DB
     if "edited_patient_db" not in st.session_state:
         st.session_state.pat_db_update = DB.copy()
+
+    if "patient_list" not in st.session_state:
+        st.session_state.patient_list = [
+            f"{int(r['id'])}: {r['name']} (age: {int(r['age'])})"
+            for (_, r) in st.session_state.pat_db.iterrows()
+        ]
+
+    if "last_saved_recording" not in st.session_state:
+        st.session_state.last_saved_recording = None
+
+    if "recordings_db" not in st.session_state:
+        DB_REC = {}
+        for p in st.session_state.patient_list:
+            id = p.split(":")[0]
+            recs = sorted(
+                [
+                    f.split("/")[1].split(f"id-{id}_")[1]
+                    for f in glob.glob("recordings/*.csv")
+                    if "/id-" + str(id) + "_" in f
+                ]
+            )
+            recs_nice = [nice_date(f) for f in recs]
+            DB_REC[p] = [recs, recs_nice]
+            # DB_REC[p] = recs
+        st.session_state.rec_db = DB_REC
 
 
 # ------------------------------------------
