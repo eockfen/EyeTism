@@ -29,10 +29,12 @@ def add_pat(name, age):
     # handle adding patient to DB
     dbl = list(st.session_state.pat_db.index)
     if len(dbl) == 0:
-        print("empty db")
+        if st.session_state.debug:
+            print("empty db")
         st.session_state.pat_db = new_pat
     else:
-        print(f"{len(dbl)} patients in db")
+        if st.session_state.debug:
+            print(f"{len(dbl)} patients in db")
         new_pat["id"] = max(st.session_state.pat_db["id"]) + 1
         st.session_state.pat_db = pd.concat(
             [st.session_state.pat_db, new_pat], axis=0, ignore_index=True
@@ -53,13 +55,15 @@ def update_DB():
 
 def del_patient(x):
     del_id = int(x.split(":")[0])
-    print(" id to delete: " + str(del_id))
     del_idx = st.session_state.pat_db.id == del_id
-    print(del_idx)
-    print(st.session_state.pat_db.loc[del_idx, :])
-    print(st.session_state.pat_db.loc[np.invert(del_idx), :])
     st.session_state.pat_db = st.session_state.pat_db.loc[np.invert(del_idx), :]
     st.session_state.pat_db.to_csv(os.path.join("files", "patients.csv"), index=False)
+
+    if st.session_state.debug:
+        print(" id to delete: " + str(del_id))
+        print(del_idx)
+        print(st.session_state.pat_db.loc[del_idx, :])
+        print(st.session_state.pat_db.loc[np.invert(del_idx), :])
 
     return True
 
@@ -174,4 +178,7 @@ with tab3:
                 container_add.error("... patient was not saved...")
                 time.sleep(2)
 
-# st.session_state
+
+# ------------------------------------------------------------
+if st.session_state.debug:
+    st.session_state
