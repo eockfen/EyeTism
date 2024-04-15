@@ -311,21 +311,20 @@ def learning(
 
 
 # -----------------------------------------------------------------------------
-def error_compare_models(inp, X_test, y_test, proba: bool = True):
+def error_compare_models(inp, y_test, proba: bool = True):
     # ----- prepare df containing prediction results -----
     scores = ["accuracy", "recall", "precision", "f1", "f2"]
     y = y_test.to_frame()
     y["img"] = [int(i.split("_")[1]) for i in y.index]
 
-    for name, model in inp.items():
-        y[name + "_pred"] = model.predict(X_test)
+    for name, data in inp.items():
+        y[name + "_pred"] = data[0]
         if proba:
-            proba_test = model.predict_proba(X_test)
-            y[name + "_proba"] = proba_test[:, 1]
+            y[name + "_proba"] = data[1][:, 1]
 
     # ----- calculate model statistics -----
     mdl_stats = pd.DataFrame(index=inp.keys())
-    for name, model in inp.items():
+    for name in inp.keys():
         # scores
         mdl_stats.loc[name, "accuracy"] = accuracy_score(y["asd"], y[name + "_pred"])
         mdl_stats.loc[name, "recall"] = recall_score(y["asd"], y[name + "_pred"])
@@ -337,7 +336,7 @@ def error_compare_models(inp, X_test, y_test, proba: bool = True):
     img_stats = pd.DataFrame(index=y["img"].unique())
     img_stats.sort_index(inplace=True)
 
-    for name, model in inp.items():
+    for name in inp.keys():
         for img in y["img"].unique():
             # get data for this img
             _ = y[y["img"] == img]
@@ -381,7 +380,7 @@ def error_compare_models(inp, X_test, y_test, proba: bool = True):
     plt.tight_layout()
 
     # --------------- DETAILLED MODEL OVERVIEW ------------------------------
-    for name, model in inp.items():
+    for name in inp.keys():
         fig, axarr = plt.subplots(2, 3, figsize=(10, 10))
         fig.suptitle(name)
 
