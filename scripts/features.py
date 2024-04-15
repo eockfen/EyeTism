@@ -877,8 +877,6 @@ if __name__ == "__main__":
 # Feature Selector for Pipelines
 # Prepare the X for each Model based on it's features
 
+# Define the feature selector function
 def feature_selector(df, features_to_keep):
-    # Select features
-    X = df[features_to_keep]
-    
-    return X
+    return df[features_to_keep]
