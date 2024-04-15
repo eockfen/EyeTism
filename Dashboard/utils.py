@@ -22,8 +22,10 @@ def init_vars():
 # ------------------------------------------
 def create_menu():
     # sidebar menu
-    st.sidebar.image("images/Logo_wide.png", width=200, use_column_width="never")
-    st.sidebar.page_link("app.py", label="Capstone Project")
+    st.sidebar.image('images/Logo_wide.png', width=200, use_column_width="never")
+    st.sidebar.page_link("app.py", label="Home")
+    st.sidebar.page_link("pages/about_Capstone.py", label="Capstone Project")
+    st.sidebar.page_link("pages/about_ASD.py", label="About ASD")
     st.sidebar.page_link("pages/dataset_features.py", label="Dataset & Features")
     st.sidebar.page_link("pages/models.py", label="Models")
     st.sidebar.page_link("pages/about_ET.py", label="About 'EyeTism'")
