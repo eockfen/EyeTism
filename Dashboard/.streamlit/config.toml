@@ -1,15 +1,18 @@
 [client]
 showSidebarNavigation = false
 
+[server]
+runOnSave = true
+
 [theme]
 # Primary accent for interactive elements
-primaryColor = '#5B5B47'
+primaryColor = '#5d5d48'
 
 # Background color for the main content area
-backgroundColor = '#FFFFFF'
+backgroundColor = '#ffffff'
 
 # Background color for sidebar and most interactive widgets
-secondaryBackgroundColor = '#B3B3B3'
+secondaryBackgroundColor = '#dfdfdf'
 
 # Color used for almost all text
 textColor = '#272727'
@@ -19,5 +22,3 @@ textColor = '#272727'
 # Default: "sans serif"
 font = "monospace"
 
-[server]
-runOnSave = true
