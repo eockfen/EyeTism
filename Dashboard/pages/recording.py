@@ -66,7 +66,7 @@ st.markdown("---")
 st.subheader("Select Patient")
 
 rec_patient = st.selectbox(
-    "Select Patient:",
+    "Record_Patient",
     [
         f"{int(r['id'])}: {r['name']} (age: {int(r['age'])})"
         for (_, r) in st.session_state.pat_db.iterrows()
@@ -77,7 +77,7 @@ rec_patient = st.selectbox(
 # note ------------------------------
 ut.h_spacer(height=3)
 st.empty().info(
-    """**PLEASE sNOTE:**\n
+    """**PLEASE NOTE:**\n
 _in the **final product**, an eye tracking software would be
 implemented to capture actual eye movement data_\n
 _until then, we **simulate** a data acquisition process by showing the actual
