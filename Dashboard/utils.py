@@ -86,6 +86,13 @@ def h_spacer(height, sb=False) -> None:
 
 
 # ------------------------------------------
+def nice_date(f):
+    s = f.split(".")[0]
+    d = datetime.datetime.strptime(s, "%Y-%m-%d_%H-%M-%S")
+    return datetime.date.strftime(d, "%A, %d.%m.%Y / %H:%M:%S")
+
+
+# ------------------------------------------
 def load_scanpath(kind: str, img: int, sp_idx: int) -> list:
     """load scanpath txt file and split individual scanpaths
 
@@ -120,8 +127,19 @@ def load_scanpath(kind: str, img: int, sp_idx: int) -> list:
 
 # ------------------------------------------
 def update_DB_recordings():
-    for (_, r) in st.session_state.pat_db.iterrows():
-        id = r["id"]
-        recs = [f.split('_')[1:] for f in glob.glob("recordings/*.csv") if f"id-{id}_" in f]
+    tmp = st.session_state.pat_db.copy()
+    for p in st.session_state.patient_list:
+        id = int(p.split(":")[0])
+
+        recs = st.session_state.rec_db[p][0]
         n_rec = len(recs)
-        print(f"{id}  ->  {n_rec}")
+
+        tmp.loc[tmp["id"] == id, "n_rec"] = n_rec
+        if n_rec > 0:
+            last_rec = st.session_state.rec_db[p][1][-1]
+            tmp.loc[tmp["id"] == id, "last_rec"] = last_rec
+        else:
+            tmp.loc[tmp["id"] == id, "last_rec"] = "---"
+
+    # save updated DB
+    tmp.to_csv(os.path.join("files", "patients.csv"), index=False)
