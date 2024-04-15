@@ -872,3 +872,13 @@ if __name__ == "__main__":
     #     shutil.rmtree(path_obj_recog)
     # os.mkdir(path_obj_recog)
     # calculate_object_detection_features(sp_file, path_obj_recog)
+
+
+# Feature Selector for Pipelines
+# Prepare the X for each Model based on it's features
+
+def feature_selector(df, features_to_keep):
+    # Select features
+    X = df[features_to_keep]
+    
+    return X
