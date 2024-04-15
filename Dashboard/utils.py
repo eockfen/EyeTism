@@ -1,6 +1,18 @@
 import streamlit as st
+import pandas as pd
+import os
 
 
+# initialize session_state variabled ------------------------------------------
+def init_vars():
+    DB = pd.read_csv(os.path.join("files", "patients.csv"))
+    if "patient_db" not in st.session_state:
+        st.session_state.pat_db = DB
+    if "edited_patient_db" not in st.session_state:
+        st.session_state.pat_db_update = DB.copy()
+
+
+# ------------------------------------------
 def create_menu():
     # sidebar menu
     st.sidebar.image('images/Logo_wide.png', width=200, use_column_width="never")
@@ -18,6 +30,7 @@ def create_menu():
     st.sidebar.page_link("pages/evaluate.py", label="Evaluate")
 
 
+# ------------------------------------------
 def default_style():
     css = '''
     <style>
@@ -28,3 +41,13 @@ def default_style():
     </style>
     '''
     st.markdown(css, unsafe_allow_html=True)
+
+
+# ------------------------------------------
+def h_spacer(height, sb=False) -> None:
+    for _ in range(height):
+        if sb:
+            st.sidebar.write('\n')
+        else:
+            print('_')
+            st.write('\n')
