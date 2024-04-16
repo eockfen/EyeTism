@@ -1,48 +1,17 @@
 import streamlit as st
 import utils as ut
-import pandas as pd
-
-# import time
-import os
-from datetime import datetime
+import ET_functions as etf
 
 # setup vars, menu, style, and so on --------------------
 ut.init_vars()
 ut.default_style()
 ut.create_menu()
 
-
-# functions ---------------------------------------------
-def save_recording(pat, kind):
-    kind = "ASD" if kind == "ASD" else "TD"
-
-    # patient, img & scanpath vars
-    pat_id = int(pat.split(":")[0])
-    images = st.session_state.images
-    sps = st.session_state.sp_idx_asd if kind == "ASD" else st.session_state.sp_idx_td
-
-    # get scanpaths
-    df_sp = None
-    for i, img in enumerate(images):
-        sp = ut.load_scanpath(kind, img, sps[i])
-        sp["img"] = img
-        df_sp = pd.concat([df_sp, sp], ignore_index=True)
-
-    # save csv file
-    dt = datetime.today().strftime("%Y-%m-%d_%H-%M-%S.csv")
-    name = f"id-{pat_id}_{dt}"
-    df_sp.to_csv(os.path.join("recordings", f"{name}"), index=False)
-
-    # save session state
-    if st.session_state.last_saved_recording is None:
-        st.session_state.last_saved_recording = name
-
-
 # page style ---------------------------------------------
 st.title("Record Gaze")
 st.markdown("---")
 
-# select patient ------------------------------
+# select patient ---------------------------------------------
 st.subheader("Select Patient")
 
 rec_patient = st.selectbox(
@@ -51,7 +20,7 @@ rec_patient = st.selectbox(
     label_visibility="collapsed",
 )
 
-# note ------------------------------
+# note ---------------------------------------------
 ut.h_spacer(height=3)
 st.empty().info(
     """**PLEASE NOTE:**\n
@@ -64,7 +33,7 @@ visible to the patient in the real-world-recording situation_"""
 )
 ut.h_spacer(height=3)
 
-# record  ------------------------------
+# record  ---------------------------------------------
 st.subheader("Start Recording")
 
 # choose example -----
@@ -85,10 +54,11 @@ else:
 video_bytes = video_file.read()
 st.video(video_bytes)
 
-# button -----
+# save recording ---------------------------------------------
+# button
 saved = st.button(
     "Save Recording",
-    on_click=save_recording,
+    on_click=etf.save_recording,
     args=(
         rec_patient,
         example,
@@ -101,11 +71,9 @@ if saved:
     container_saved.success(
         f"Recording saved successfully in '{st.session_state.last_saved_recording}'."
     )
-    # update DB_records
-    ut.update_DB_recordings()
-
+    # update DB_records & session.state
+    etf.update_rec_DB()
     st.session_state.last_saved_recording = None
-
 
 # ------------------------------------------------------------
 if st.session_state.debug:

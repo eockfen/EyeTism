@@ -1,16 +1,17 @@
 import streamlit as st
 import utils as ut
-
+import ET_functions as etf
 
 # setup vars, menu, style, and so on --------------------
 ut.init_vars()
 ut.default_style()
 ut.create_menu()
 
+# page style ---------------------------------------------
 st.title("Evaluate Patient")
 st.markdown("---")
 
-# selecting patient & recording
+# selecting patient & recording ---------------------------------------------
 st.subheader("Select Patient & Measurement")
 
 col_name, col_recording = st.columns([1, 1], gap="small")
@@ -30,7 +31,18 @@ with col_recording:
         key="eval_meas",
     )
 
-ut.h_spacer(2)
+ut.h_spacer(0)
+
+# calculate features ---------------------------------------------
+_, col_load, _ = st.columns([0.3, 0.4, 0.3], gap="small")
+
+# button -----
+with col_load:
+    loaded = st.button(
+        "Analyse Eyetracking Data",
+        on_click=etf.extract_features,
+        )
+
 
 # ------------------------------------------------------------
 if st.session_state.debug:
