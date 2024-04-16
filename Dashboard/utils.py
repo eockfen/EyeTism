@@ -8,10 +8,13 @@ import datetime
 # initialize session_state variabled ------------------------------------------
 def init_vars():
     st.session_state.debug = True
+
+    # fetch images from images folder
+    img_s = glob.glob(os.path.join("images", "stimuli", "*.png"))
     st.session_state.opt = {
-        "images": [207, 95, 203, 81, 271, 176, 193, 272],
-        "sp_idx_asd": [4, 0, 6, 1, 10, 3, 2, 7],
-        "sp_idx_td": [1, 7, 7, 7, 7, 7, 7, 2],
+        "images": sorted([int(s.split("/")[-1].split(".")[0]) for s in img_s]),
+        "sp_idx_asd": {81: 1, 95: 0, 176: 3, 193: 2, 203: 6, 207: 4, 271: 10, 272: 7},
+        "sp_idx_td": {81: 7, 95: 7, 176: 7, 193: 7, 203: 7, 207: 1, 271: 7, 272: 2},
     }
 
     DB = pd.read_csv(os.path.join("files", "patients.csv"))
@@ -32,6 +35,7 @@ def init_vars():
     if "recordings_db" not in st.session_state:
         DB_REC = {}
         for p in st.session_state.patient_list:
+            print(p)
             id = p.split(":")[0]
             recs = sorted(
                 [
