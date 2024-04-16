@@ -1,72 +1,12 @@
-import os
 import streamlit as st
-import pandas as pd
-import numpy as np
 import utils as ut
 import time
-
+import ET_functions as etf
 
 # setup vars, menu, style, and so on --------------------
 ut.init_vars()
 ut.default_style()
 ut.create_menu()
-
-
-# functions ---------------------------------------------
-def add_pat(name, age):
-    if name == "":
-        return False
-
-    # handle name
-    name.strip()
-
-    # new patient
-    new_pat = pd.DataFrame(
-        {"id": 1, "name": name, "age": int(age), "n_rec": 0, "last_rec": 0},
-        index=[0],
-    )
-
-    # handle adding patient to DB
-    dbl = list(st.session_state.pat_db.index)
-    if len(dbl) == 0:
-        if st.session_state.debug:
-            print("empty db")
-        st.session_state.pat_db = new_pat
-    else:
-        if st.session_state.debug:
-            print(f"{len(dbl)} patients in db")
-        new_pat["id"] = max(st.session_state.pat_db["id"]) + 1
-        st.session_state.pat_db = pd.concat(
-            [st.session_state.pat_db, new_pat], axis=0, ignore_index=True
-        )
-
-    # save updated DB
-    st.session_state.pat_db.to_csv(os.path.join("files", "patients.csv"), index=False)
-
-    return True
-
-
-def update_DB():
-    st.session_state.pat_db = st.session_state.pat_db_update
-    st.session_state.pat_db.to_csv(os.path.join("files", "patients.csv"), index=False)
-
-    return True
-
-
-def del_patient(x):
-    del_id = int(x.split(":")[0])
-    del_idx = st.session_state.pat_db.id == del_id
-    st.session_state.pat_db = st.session_state.pat_db.loc[np.invert(del_idx), :]
-    st.session_state.pat_db.to_csv(os.path.join("files", "patients.csv"), index=False)
-
-    if st.session_state.debug:
-        print(" id to delete: " + str(del_id))
-        print(del_idx)
-        print(st.session_state.pat_db.loc[del_idx, :])
-        print(st.session_state.pat_db.loc[np.invert(del_idx), :])
-
-    return True
-
 
 # page style ---------------------------------------------
 st.title("Manage Patients")
@@ -117,7 +57,7 @@ with tab2:
     )
 
     # button
-    updated = st.button("Save Changes", on_click=update_DB)
+    updated = st.button("Save Changes", on_click=etf.update_pat_DB)
 
     # feedback
     container_update = st.empty()
@@ -139,7 +79,7 @@ with tab2:
     )
 
     # button
-    deleted = st.button("Delete Patient", on_click=del_patient, args=(sel_patient,))
+    deleted = st.button("Delete Patient", on_click=etf.del_patient, args=(sel_patient,))
 
     # feedback
     container_del = st.empty()
@@ -167,7 +107,7 @@ with tab3:
 
         # handle submission
         if submitted:
-            status = add_pat(name, age)
+            status = etf.add_pat(name, age)
             container_add = st.empty()
             if status:
                 container_add.success("New patient saved successfully.")

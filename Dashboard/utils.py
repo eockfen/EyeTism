@@ -1,6 +1,5 @@
 import streamlit as st
 import pandas as pd
-import numpy as np
 import glob
 import os
 import datetime
@@ -9,9 +8,11 @@ import datetime
 # initialize session_state variabled ------------------------------------------
 def init_vars():
     st.session_state.debug = True
-    st.session_state.images = [207, 95, 203, 81, 271, 176, 193, 272]
-    st.session_state.sp_idx_asd = [4, 0, 6, 1, 10, 3, 2, 7]
-    st.session_state.sp_idx_td = [1, 7, 7, 7, 7, 7, 7, 2]
+    st.session_state.opt = {
+        "images": [207, 95, 203, 81, 271, 176, 193, 272],
+        "sp_idx_asd": [4, 0, 6, 1, 10, 3, 2, 7],
+        "sp_idx_td": [1, 7, 7, 7, 7, 7, 7, 2],
+    }
 
     DB = pd.read_csv(os.path.join("files", "patients.csv"))
     if "patient_db" not in st.session_state:
@@ -48,9 +49,9 @@ def init_vars():
 # ------------------------------------------
 def create_menu():
     # sidebar menu
-    st.sidebar.image('images/Logo_wide.png', width=200, use_column_width="never")
+    st.sidebar.image("images/Logo_wide.png", width=200, use_column_width="never")
     st.sidebar.page_link("app.py", label="Home")
-    st.sidebar.page_link("pages/about_Capstone.py", label="Capstone Project")
+    # st.sidebar.page_link("pages/about_Capstone.py", label="Capstone Project")
     st.sidebar.page_link("pages/about_ASD.py", label="About ASD")
     st.sidebar.page_link("pages/dataset_features.py", label="Dataset & Features")
     st.sidebar.page_link("pages/models.py", label="Models")
@@ -93,53 +94,6 @@ def nice_date(f):
 
 
 # ------------------------------------------
-def load_scanpath(kind: str, img: int, sp_idx: int) -> list:
-    """load scanpath txt file and split individual scanpaths
-
-    Args:
-        file (str): path to scanpath txt file
-
-    Returns:
-        list: list of pd.DataFrames for each individual scanpath
-    """
-
-    # path to scanpath file
-    sp_path = os.path.join(
-        "..",
-        "data",
-        "Saliency4ASD",
-        "TrainingData",
-        kind,
-        f"{kind}_scanpath_{img}.txt",
-    )
-
-    # read scanpat*.txt file
-    sp = pd.read_csv(sp_path, index_col=None)
-    sp.columns = map(str.strip, sp.columns)
-    sp.columns = map(str.lower, sp.columns)
-
-    starts = np.where(sp["idx"] == 0)[0]
-    ends = np.append(starts[1:], len(sp))
-    all_sp = [sp[start:end] for start, end in zip(starts, ends)]
-
-    return all_sp[sp_idx]
-
-
-# ------------------------------------------
-def update_DB_recordings():
-    tmp = st.session_state.pat_db.copy()
-    for p in st.session_state.patient_list:
-        id = int(p.split(":")[0])
-
-        recs = st.session_state.rec_db[p][0]
-        n_rec = len(recs)
-
-        tmp.loc[tmp["id"] == id, "n_rec"] = n_rec
-        if n_rec > 0:
-            last_rec = st.session_state.rec_db[p][1][-1]
-            tmp.loc[tmp["id"] == id, "last_rec"] = last_rec
-        else:
-            tmp.loc[tmp["id"] == id, "last_rec"] = "---"
-
-    # save updated DB
-    tmp.to_csv(os.path.join("files", "patients.csv"), index=False)
+def ugly_date(f):
+    d = datetime.datetime.strptime(f, "%A, %d.%m.%Y / %H:%M:%S")
+    return datetime.date.strftime(d, "%Y-%m-%d_%H-%M-%S")
