@@ -62,7 +62,7 @@ st.write("""
 The scanpaths contain information about where, how long, and how often the participant has looked during the 3-second period when the picture was displayed. 
 The position of the eye gaze is depicted as x and y coordinates on the pixels of the image, along with the duration of fixation in milliseconds, representing **fixation points**.
 The movement between two fixation points is called **saccades**. 
-Along with these metrics, a multitude of features can be calculated. as it will be demonstrated later (add link)
+Along with these metrics, a multitude of features can be calculated. as it will be demonstrated below (add Link)
 """)
 
 
