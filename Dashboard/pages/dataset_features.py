@@ -18,17 +18,17 @@ st.markdown("---")
 
 st.header('The Dataset and Features')
 
-st.subheader('The Dataset')
-st.write("""The dataset was provided by #### and is freely available for download.
-        Contact information, datasets and further information are avaialble [here](https://saliency4asd.ls2n.fr/).""")
+st.subheader('About the Data')
 
-st.text('**The images**')
-st.write(""" The dataset for consists of 300 images from the MIT1003 dataset. In several sessions, each image was displayed for 3 seconds followed by an grey image. For each picture the
-          Gaze behaviour was recorderd for  14 typically developing children and 14 high-functioning ASD children in the age range of 5 to 12.
-         The resulting scanpaths weree aggregateted per patient class and image, resulting in the following. 
-            """)
+st.write("""
+The dataset has been provided by the organizing committee of the Grand Challenge Saliency4ASD from Shanghai Jiao Tong University, China, and Université de Nantes, France.
+It is readily available for download. For contact information, access to the data, and further details, please visit the [official website](https://saliency4asd.ls2n.fr/).
 
-st.text('Random selection of images')
+The dataset consists of 300 images from the MIT1003 dataset. In multiple sessions, 14 typically developed (TD) children and 14 high-functioning ASD children, aged 5 to 12 years, were instructed to view each image. 
+Each image was displayed for 3 seconds, followed by a 1-second grey image. The gaze behavior of the participants was recorded. 
+The resulting scanpaths were aggregated per patient class and image, as depicted in the schema below.
+""")
+
 
 
 # Function to load and display images from a folder
@@ -56,67 +56,98 @@ start_index = st.slider("Select starting index", 0, len(os.listdir(folder_path))
 # Display the images
 display_images(folder_path, start_index)
 
+st.text("**The Scanpaths**")
+
+st.write(""" 
+The scanpaths contain information about where, how long, and how often the participant has looked during the 3-second period when the picture was displayed. 
+The position of the eye gaze is depicted as x and y coordinates on the pixels of the image, along with the duration of fixation in milliseconds, representing **fixation points**.
+The movement between two fixation points is called **saccades**. 
+Along with these metrics, a multitude of features can be calculated. as it will be demonstrated later (add link)
+""")
 
 
 
+import os
 
+# Path to the folder containing images
+image_folder = "../data/Saliency4ASD/TrainingData/Images/"
+# Path to the folder containing scanpaths
+scanpath_folder = "../data/Saliency4ASD/TrainingData/"
+# Path to the folder containing fixation points
+fixpts_folder = "../data/Saliency4ASD/AdditionalData/"
+# Path to the folder containing heatmaps
+heatmaps_folder = "../data/Saliency4ASD/AdditionalData/"
 
+# Get a list of all image files
+image_files = sorted(os.listdir(image_folder), key=lambda x: int(x.split(".")[0]))
 
-st.text("The scanpaths")
-st.write(""" The scanpaths contain information about where, how long, and how often  the participant has looked 
-         during the 3 second period, where the picture has been displayed. 
-         The position of the eye gaze is depicted as x and y coordinates on the pixels of the image along with the duration of fixation in milliseconds, here as a fixation points
-         The movement between two fixation points is saccades. 
-         Along with these both metrics, a multitude of features can be calculated... 
-         For more, see the section on 
-         
-          """ )
-st.write(""" Depicted below is the workflow for data collection for one example image """)
+# Function to get corresponding file paths
+def get_file_paths(image_name):
+    image_path = os.path.join(image_folder, image_name)
+    scanpath_path = os.path.join(scanpath_folder, "TD/TD_scanpath_" + image_name[:-4] + ".txt")
+    fixpts_path = os.path.join(fixpts_folder, "TD_FixPts/" + image_name[:-4] + "_f.png")
+    heatmap_path = os.path.join(heatmaps_folder, "TD_HeatMaps/" + image_name[:-4] + "_h.png")
+    return image_path, scanpath_path, fixpts_path, heatmap_path
 
-with st.expander('Image'):
-    st.image('../data/Saliency4ASD/TrainingData/Images/1.png')
+# Select an image
+selected_image = st.selectbox('Select an image:', image_files)
 
+# Display the selected image
+with st.expander('Show Image'):
+    st.image(os.path.join(image_folder, selected_image))
 
+# Display aggregated scanpaths
+#col1, col2 = st.columns(2)
 
-col1, col2 = st.columns(2)
-with col1:
-    df_TD1 = pd.read_csv('../data/Saliency4ASD/TrainingData/TD/TD_scanpath_1.txt')
-    st.dataframe(df_TD1.style.apply(lambda row: ['background-color: yellow' if row['Idx'] == 0 else '' for _ in row], axis=1))
+st.write("""
+    This section presents the aggregated scanpaths for the selected image. 
+    Each row corresponds to the gaze behavior of a participant, with a '0' denoting the initiation of a new gaze sequence.
+    However, it's important to note that the order of scanpaths does not correspond to the order of individual participants in the experiments.
+    As a result, it is not feasible to attribute gaze patterns to specific individuals.
+    """)
 
-    #st.dataframe(df_TD1.style.apply(lambda x: ['background-color: yellow' if x.name == 0 else '' for i in x], axis=1))
-
-
-with col2:
-    df_ASD1 = pd.read_csv('../data/Saliency4ASD/TrainingData/ASD/ASD_scanpath_1.txt')
-    st.dataframe(df_ASD1.style.apply(lambda row: ['background-color: yellow' if row['Idx'] == 0 else '' for _ in row], axis=1))
-st.write("""For this image are depicted the agreggated scanpaths for one image.
-         Each row with '0' indicates the beginning of the gaze for a new participant.
-         """)
-    #st.dataframe(df_ASD1.style.apply(lambda x: ['background-color: yellow' if x.name == 0 else '' for i in x], axis=1))
+with st.expander('Show Scanpaths'):
     
+    col1, col2 = st.columns(2)
+    with col1:
+        df_TD = pd.read_csv(os.path.join(scanpath_folder, "TD/TD_scanpath_" + selected_image[:-4] + ".txt"))
+        st.markdown("<h2 style='text-align: center;'>TD</h2>", unsafe_allow_html=True)
+        st.dataframe(df_TD.style.apply(lambda row: ['background-color: yellow' if row['Idx'] == 0 else '' for _ in row], axis=1))
+    with col2:
+        df_ASD = pd.read_csv(os.path.join(scanpath_folder, "ASD/ASD_scanpath_" + selected_image[:-4] + ".txt"))
+        st.markdown("<h2 style='text-align: center;'>ASD</h2>", unsafe_allow_html=True)
+        st.dataframe(df_ASD.style.apply(lambda row: ['background-color: yellow' if row['Idx'] == 0 else '' for _ in row], axis=1))
 
 
+# Display aggregated fixation points
 
-st.write('''From the resulting scanpaths, the aggregated Fixation points on this specific image can be calculated.
-         The points are not visible, so better zoom in on the picture.''')
+st.write('''From the resulting scanpaths, aggregated fixation points for this specific image can be calculated. 
+            However, these points are not visible at this scale, so it's recommended to zoom in on the picture for better visibility.''')
+with st.expander('Show Fixation Points'):
+    
+    col3, col4 = st.columns(2)
+    with col3:
+        st.markdown("<h2 style='text-align: center;'>TD</h2>", unsafe_allow_html=True)
+        st.image(os.path.join(fixpts_folder, "TD_FixPts/" + selected_image[:-4] + "_f.png"))
+    with col4:
+        st.markdown("<h2 style='text-align: center;'>ASD</h2>", unsafe_allow_html=True)
+        st.image(os.path.join(fixpts_folder, "ASD_FixPts/" + selected_image[:-4] + "_f.png"))
 
-with col1: 
-    st.markdown("<h2 style='text-align: center;'>TD</h2>", unsafe_allow_html=True)
-    st.image('../data/Saliency4ASD/AdditionalData/TD_FixPts/1_f.png')
 
-with col2: 
-    st.markdown("<h2 style='text-align: center;'>ASD</h2>", unsafe_allow_html=True)
-    st.image('../data/Saliency4ASD/AdditionalData/ASD_FixPts/1_f.png')
+# Display heatmaps
+st.write("Heatmaps provide a better overview of where the gaze focuses during observation.")
+with st.expander('Show Heatmaps'):
+   
+    col5, col6 = st.columns(2)
+    with col5:
+        st.markdown("<h2 style='text-align: center;'>TD</h2>", unsafe_allow_html=True)
+        st.image(os.path.join(heatmaps_folder, "TD_HeatMaps/" + selected_image[:-4] + "_h.png"))
 
-st.write(""" and from the fixpoints can be heatmaps calculated inf """)
+    with col6:
+        st.markdown("<h2 style='text-align: center;'>ASD</h2>", unsafe_allow_html=True)
+        st.image(os.path.join(heatmaps_folder, "ASD_HeatMaps/" + selected_image[:-4] + "_h.png"))
 
-with col1: 
-    st.markdown("<h2 style='text-align: center;'>TD</h2>", unsafe_allow_html=True)
-    st.image('../data/Saliency4ASD/AdditionalData/TD_HeatMaps/1_h.png')
 
-with col2: 
-    st.markdown("<h2 style='text-align: center;'>ASD</h2>", unsafe_allow_html=True)
-    st.image('../data/Saliency4ASD/AdditionalData/ASD_HeatMaps/1_h.png')
 
 
 st.subheader('The features')
