@@ -1,5 +1,6 @@
 import streamlit as st
 import utils as ut
+import time
 import ET_functions as etf
 
 # setup vars, menu, style, and so on --------------------
@@ -14,7 +15,7 @@ st.markdown("---")
 # selecting patient & recording ---------------------------------------------
 st.subheader("Select Patient & Measurement")
 
-col_name, col_recording = st.columns([1, 1], gap="small")
+col_name, col_recording, col_btn = st.columns([3, 3, 1], gap="small")
 with col_name:
     st.selectbox(
         "Evaluate_Patient",
@@ -31,18 +32,46 @@ with col_recording:
         key="eval_meas",
     )
 
-ut.h_spacer(0)
-
-# calculate features ---------------------------------------------
-_, col_load, _ = st.columns([0.3, 0.4, 0.3], gap="small")
-
-# button -----
-with col_load:
-    loaded = st.button(
-        "Analyse Eyetracking Data",
-        on_click=etf.extract_features,
+with col_btn:
+    go_analyse = st.button(
+        "Analyse",
         )
 
+# preogress bar
+prog_bar = st.progress(0, "")
+
+ut.h_spacer(0)
+
+# feedback
+if go_analyse:
+    # update DB_records & session.state
+    prog_bar.progress(5, text="extracting features")
+    df = etf.extract_features()
+
+    prog_bar.progress(50, text="preprocessing features")
+    df = etf.clean_features(df)
+    time.sleep(1)
+
+    prog_bar.progress(60, text="predicting single images (1/7)")
+    time.sleep(1)
+    prog_bar.progress(65, text="predicting single images (2/7)")
+    time.sleep(1)
+    prog_bar.progress(70, text="predicting single images (3/7)")
+    time.sleep(1)
+    prog_bar.progress(74, text="predicting single images (4/7)")
+    time.sleep(1)
+    prog_bar.progress(78, text="predicting single images (5/7)")
+    time.sleep(1)
+    prog_bar.progress(82, text="predicting single images (6/7)")
+    time.sleep(1)
+    prog_bar.progress(90, text="predicting single images (7/7)")
+    time.sleep(1)
+    prog_bar.progress(95, text="visualizing results")
+    time.sleep(3)
+
+    prog_bar.progress(100, text="done")
+
+    st.dataframe(df)
 
 # ------------------------------------------------------------
 if st.session_state.debug:
