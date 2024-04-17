@@ -3,7 +3,7 @@ import utils as ut
 import pandas as pd
 import numpy as np
 import os
-import random
+
 
 # load default style settings
 ut.default_style()
@@ -56,18 +56,15 @@ start_index = st.slider("Select starting index", 0, len(os.listdir(folder_path))
 # Display the images
 display_images(folder_path, start_index)
 
-st.text("**The Scanpaths**")
+st.markdown("**Scanpaths**")
 
 st.write(""" 
 The scanpaths contain information about where, how long, and how often the participant has looked during the 3-second period when the picture was displayed. 
 The position of the eye gaze is depicted as x and y coordinates on the pixels of the image, along with the duration of fixation in milliseconds, representing **fixation points**.
 The movement between two fixation points is called **saccades**. 
-Along with these metrics, a multitude of features can be calculated. as it will be demonstrated below (add Link)
+Along with these metrics, a multitude of features can be calculated. which are explained in detail in our (repository)[add Link].
 """)
 
-
-
-import os
 
 # Path to the folder containing images
 image_folder = "../data/Saliency4ASD/TrainingData/Images/"
@@ -119,23 +116,15 @@ with st.expander('Show Scanpaths'):
         st.dataframe(df_ASD.style.apply(lambda row: ['background-color: yellow' if row['Idx'] == 0 else '' for _ in row], axis=1))
 
 
-# Display aggregated fixation points
+st.markdown("**Heatmaps**")
 
-st.write('''From the resulting scanpaths, aggregated fixation points for this specific image can be calculated. 
-            However, these points are not visible at this scale, so it's recommended to zoom in on the picture for better visibility.''')
-with st.expander('Show Fixation Points'):
-    
-    col3, col4 = st.columns(2)
-    with col3:
-        st.markdown("<h2 style='text-align: center;'>TD</h2>", unsafe_allow_html=True)
-        st.image(os.path.join(fixpts_folder, "TD_FixPts/" + selected_image[:-4] + "_f.png"))
-    with col4:
-        st.markdown("<h2 style='text-align: center;'>ASD</h2>", unsafe_allow_html=True)
-        st.image(os.path.join(fixpts_folder, "ASD_FixPts/" + selected_image[:-4] + "_f.png"))
+st.write('''From the resulting scanpaths for each patient class, the aggregated heatmaps can be obtained for this specific image.
+         They provide an idea where the gaze focuses during observation.
+        ''')
 
 
 # Display heatmaps
-st.write("Heatmaps provide a better overview of where the gaze focuses during observation.")
+
 with st.expander('Show Heatmaps'):
    
     col5, col6 = st.columns(2)
@@ -147,9 +136,16 @@ with st.expander('Show Heatmaps'):
         st.markdown("<h2 style='text-align: center;'>ASD</h2>", unsafe_allow_html=True)
         st.image(os.path.join(heatmaps_folder, "ASD_HeatMaps/" + selected_image[:-4] + "_h.png"))
 
+st.markdown('**Object and Face recognition**')
 
 
 
-st.subheader('The features')
+st.markdown("**Saliency**")
+st.write('''Images can also be feed  to Saliency Models, which try to predict the features drawing the visual attention of humans.
+         These in turn can be compared to our actual scanpaths and into account as additional features. There are several models available, a selection 
+         is available [here](https://saliency.tuebingen.ai/datasets.html).
+      
+        ''')
 
-st.write("https://www.sciencedirect.com/science/article/abs/pii/S0923596520302150")
+
+
