@@ -1,6 +1,6 @@
 import streamlit as st
 import utils as ut
-import ET_functions as etf
+import functions as etf
 
 # setup vars, menu, style, and so on --------------------
 ut.init_vars()

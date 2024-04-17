@@ -1,7 +1,7 @@
 import streamlit as st
 import utils as ut
 import time
-import ET_functions as etf
+import functions as etf
 
 # setup vars, menu, style, and so on --------------------
 ut.init_vars()
@@ -15,7 +15,7 @@ st.markdown("---")
 # selecting patient & recording ---------------------------------------------
 st.subheader("Select Patient & Measurement")
 
-col_name, col_recording, col_btn = st.columns([3, 3, 1], gap="small")
+col_name, col_recording, col_btn = st.columns([4, 6, 2], gap="small")
 with col_name:
     st.selectbox(
         "Evaluate_Patient",
