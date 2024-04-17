@@ -1,7 +1,7 @@
 import streamlit as st
 import utils as ut
 import time
-import functions as etf
+import functions as fct
 
 # setup vars, menu, style, and so on --------------------
 ut.init_vars()
@@ -16,7 +16,7 @@ tab1, tab2 = st.tabs(
 
 # list all patients ---------------------------------------------
 with tab1:
-    st.subheader("List all patients")
+    st.subheader("List All Patients")
 
     # show db
     st.dataframe(
@@ -35,7 +35,7 @@ with tab1:
 # edit patients ---------------------------------------------
 with tab2:
     # edit patient entries -----------
-    st.subheader("Edit patient entries")
+    st.subheader("Edit Patient Entries")
 
     # show db
     st.session_state.pat_db_update = st.data_editor(
@@ -55,7 +55,7 @@ with tab2:
     )
 
     # button
-    updated = st.button("Save Changes", on_click=etf.update_pat_DB)
+    updated = st.button("Save Changes", on_click=fct.update_pat_DB)
 
     # feedback
     container_update = st.empty()
@@ -66,10 +66,10 @@ with tab2:
 
     ut.h_spacer(5)
 
-    col_new, col_del = st.columns([1, 1], gap="large")
+    col_new, col_del = st.columns([1, 1], gap="medium")
     with col_new:
         # add new patient entry ---------------------------------
-        st.subheader("Create new patient entry")
+        st.subheader("Create New Patient")
 
         with st.form("add_patient", clear_on_submit=True):
             # name
@@ -85,7 +85,7 @@ with tab2:
 
             # handle submission
             if submitted:
-                status = etf.add_pat(name, age)
+                status = fct.add_pat(name, age)
                 container_add = st.empty()
                 if status:
                     container_add.success("New patient saved successfully.")
@@ -98,7 +98,7 @@ with tab2:
 
     with col_del:
         # delete patient entry ---------------------------------
-        st.subheader("Delete patient entry")
+        st.subheader("Delete Patient")
 
         with st.form("del_patient", clear_on_submit=True):
             sel_patient = st.selectbox(
@@ -109,7 +109,7 @@ with tab2:
 
             # submit button
             deleted = st.form_submit_button(
-                "Delete Patient", on_click=etf.del_patient, args=(sel_patient,)
+                "Delete Patient", on_click=fct.del_patient, args=(sel_patient,)
             )
 
         # feedback

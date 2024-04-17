@@ -1,6 +1,6 @@
 import streamlit as st
 import utils as ut
-import functions as etf
+import functions as fct
 
 # setup vars, menu, style, and so on --------------------
 ut.init_vars()
@@ -8,7 +8,7 @@ ut.default_style()
 ut.create_menu()
 
 # page style ---------------------------------------------
-st.title("Record Gaze")
+st.title("Recording")
 st.markdown("---")
 
 # select patient ---------------------------------------------
@@ -58,7 +58,7 @@ st.video(video_bytes)
 # button
 saved = st.button(
     "Save Recording",
-    on_click=etf.save_recording,
+    on_click=fct.save_recording,
     args=(
         rec_patient,
         example,
@@ -72,7 +72,7 @@ if saved:
         f"Recording saved successfully in '{st.session_state.last_saved_recording}'."
     )
     # update DB_records & session.state
-    etf.update_rec_DB()
+    fct.update_rec_DB()
     st.session_state.last_saved_recording = None
 
 # ------------------------------------------------------------

@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 import os
 import imageio.v3 as iio
-import functions as etf
+import functions as fct
 from scipy import ndimage
 import glob
 
@@ -16,7 +16,7 @@ def scanpath(rec_file: str) -> pd.DataFrame:
     df = None
 
     # loop scanpaths
-    sps = etf.load_scanpath(rec_file)
+    sps = fct.load_scanpath(rec_file)
     for sp in sps:
         # img
         img = sp["img"].iloc[0]
@@ -77,7 +77,7 @@ def saliency(rec_file: str) -> pd.DataFrame:
     df = None
 
     # loop scanpaths
-    sps = etf.load_scanpath(rec_file)
+    sps = fct.load_scanpath(rec_file)
     for sp in sps:
         # img
         img = sp["img"].iloc[0]
@@ -213,7 +213,7 @@ def objects(rec_file: str) -> pd.DataFrame:
     )
 
     # loop scanpaths
-    sps = etf.load_scanpath(rec_file)
+    sps = fct.load_scanpath(rec_file)
     for sp in sps:
         # img
         img = sp["img"].iloc[0]

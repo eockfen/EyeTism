@@ -50,8 +50,9 @@ def add_pat(name, age):
 
 
 def update_pat_DB():
-    st.session_state.pat_db = st.session_state.pat_db_update
-    st.session_state.pat_db.to_csv(os.path.join("files", "patients.csv"), index=False)
+    print(st.session_state.pat_db_update)
+    # st.session_state.pat_db = st.session_state.pat_db_update
+    # st.session_state.pat_db.to_csv(os.path.join("files", "patients.csv"), index=False)
 
     return True
 

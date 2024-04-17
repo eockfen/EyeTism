@@ -1,7 +1,7 @@
 import streamlit as st
 import utils as ut
 import time
-import functions as etf
+import functions as fct
 
 # setup vars, menu, style, and so on --------------------
 ut.init_vars()
@@ -38,20 +38,22 @@ with col_btn:
         )
 
 # preogress bar
-prog_bar = st.progress(0, "")
+prog_bar = st.progress(0, text="...")
 
 ut.h_spacer(0)
 
 # feedback
 if go_analyse:
-    # update DB_records & session.state
+    # extract features
     prog_bar.progress(5, text="extracting features")
-    df = etf.extract_features()
+    df = fct.extract_features()
 
+    # clean up features
     prog_bar.progress(50, text="preprocessing features")
-    df = etf.clean_features(df)
+    df = fct.clean_features(df)
     time.sleep(1)
 
+    # run predictions
     prog_bar.progress(60, text="predicting single images (1/7)")
     time.sleep(1)
     prog_bar.progress(65, text="predicting single images (2/7)")

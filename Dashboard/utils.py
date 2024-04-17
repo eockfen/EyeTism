@@ -34,7 +34,6 @@ def init_vars():
     if "recordings_db" not in st.session_state:
         DB_REC = {}
         for p in st.session_state.patient_list:
-            print(p)
             id = p.split(":")[0]
             recs = sorted(
                 [
