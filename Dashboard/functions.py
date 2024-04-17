@@ -1,4 +1,5 @@
 import os
+import pickle
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -190,6 +191,20 @@ def clean_features(df):
     df = df[df["sp_fix_duration_ms_total"] <= 5000]
 
     return df
+
+
+def predict(df):
+    pred = []
+    proba = []
+    for img in df.index.tolist():
+        X = df.loc[[img]]
+        mdl = st.session_state.img2mdl[img]
+        with open(os.path.join("models", f"{mdl}.pickle"), "rb") as f:
+            clf = pickle.load(f)
+        pred.append(clf.predict(X)[0])
+        proba.append(clf.predict_proba(X)[0])
+
+    return pred, proba
 
 
 # --- if script is run by it's own --------------------------------------------

@@ -51,29 +51,20 @@ if go_analyse:
     # clean up features
     prog_bar.progress(50, text="preprocessing features")
     df = fct.clean_features(df)
-    time.sleep(1)
+    time.sleep(0.75)
 
     # run predictions
-    prog_bar.progress(60, text="predicting single images (1/7)")
-    time.sleep(1)
-    prog_bar.progress(65, text="predicting single images (2/7)")
-    time.sleep(1)
-    prog_bar.progress(70, text="predicting single images (3/7)")
-    time.sleep(1)
-    prog_bar.progress(74, text="predicting single images (4/7)")
-    time.sleep(1)
-    prog_bar.progress(78, text="predicting single images (5/7)")
-    time.sleep(1)
-    prog_bar.progress(82, text="predicting single images (6/7)")
-    time.sleep(1)
-    prog_bar.progress(90, text="predicting single images (7/7)")
-    time.sleep(1)
+    prog_bar.progress(70, text="predict TD/ASD")
+    pred, proba = fct.predict(df)
+    time.sleep(0.75)
+
     prog_bar.progress(95, text="visualizing results")
-    time.sleep(3)
+    time.sleep(2)
 
     prog_bar.progress(100, text="done")
 
-    st.dataframe(df)
+    if st.session_state.debug:
+        st.dataframe(df)
 
 # ------------------------------------------------------------
 if st.session_state.debug:

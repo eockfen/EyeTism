@@ -47,6 +47,18 @@ def init_vars():
             # DB_REC[p] = recs
         st.session_state.rec_db = DB_REC
 
+    if "img2mdl" not in st.session_state:
+        st.session_state.img2mdl = {
+            81: "XGB",
+            95: "XGB",
+            176: "XGB",
+            193: "XGB",
+            203: "XGB",
+            207: "XGB",
+            271: "XGB",
+            272: "XGB",
+        }
+
 
 # ------------------------------------------
 def create_menu():
