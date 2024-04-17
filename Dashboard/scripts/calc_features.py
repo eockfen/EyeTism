@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 import os
 import imageio.v3 as iio
-import ET_functions as etf
+import functions as etf
 from scipy import ndimage
 import glob
 
@@ -23,7 +23,7 @@ def scanpath(rec_file: str) -> pd.DataFrame:
         df_sp = pd.DataFrame(pd.Series(img), columns=["img"])
 
         # get size of image
-        img_file = os.path.join(curdir, "images", "stimuli", f"{img}.png")
+        img_file = os.path.join(curdir, "..", "images", "stimuli", f"{img}.png")
         image_size = iio.imread(img_file).shape
 
         # fix count
@@ -70,7 +70,7 @@ def scanpath(rec_file: str) -> pd.DataFrame:
 # region SALIENCY -------------------------------------------------
 def saliency(rec_file: str) -> pd.DataFrame:
     curdir = os.path.dirname(__file__)
-    path_smaps = os.path.join(curdir, "..", "saliency_predictions")
+    path_smaps = os.path.join(curdir, "..", "files", "saliency_predictions")
     sal_dict = {"sam_resnet": "sam_", "DeepGazeIIE": "dg_"}
 
     # instantiate df
@@ -164,17 +164,10 @@ def intersect(rect1, rect2):
     x1, y1, w1, h1 = rect1
     x2, y2, w2, h2 = rect2
 
-    # Calculate intersection coordinates
-    x_left = max(x1, x2)
-    y_top = max(y1, y2)
-    x_right = min(x1 + w1, x2 + w2)
-    y_bottom = min(y1 + h1, y2 + h2)
-
     # Check if there is an intersection
-    if x_right >= x_left and y_bottom >= y_top:
+    if min(x1 + w1, x2 + w2) >= max(x1, x2) and min(y1 + h1, y2 + h2) >= max(y1, y2):
         return True
-    else:
-        return False
+    return False
 
 
 # test if obejct is animate
@@ -212,8 +205,12 @@ def objects(rec_file: str) -> pd.DataFrame:
     df = None
 
     # load precalculated faces & objects
-    detected_faces = pickle.load(open(os.path.join(curdir, "models", "faces.pickle"), "rb"))
-    detected_objects = pickle.load(open(os.path.join(curdir, "models", "objects.pickle"), "rb"))
+    detected_faces = pickle.load(
+        open(os.path.join(curdir, "..", "models", "faces.pickle"), "rb")
+    )
+    detected_objects = pickle.load(
+        open(os.path.join(curdir, "..", "models", "objects.pickle"), "rb")
+    )
 
     # loop scanpaths
     sps = etf.load_scanpath(rec_file)

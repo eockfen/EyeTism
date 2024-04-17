@@ -3,12 +3,11 @@ import pandas as pd
 import glob
 import os
 import datetime
+import utils as ut
 
 
 # initialize session_state variabled ------------------------------------------
 def init_vars():
-    st.session_state.debug = True
-
     # fetch images from images folder
     img_s = glob.glob(os.path.join("images", "stimuli", "*.png"))
     st.session_state.opt = {
@@ -66,6 +65,9 @@ def create_menu():
     st.sidebar.page_link("pages/patients.py", label="Patients")
     st.sidebar.page_link("pages/recording.py", label="Record")
     st.sidebar.page_link("pages/evaluate.py", label="Evaluate")
+    ut.h_spacer(7, sb=True)
+    st.sidebar.markdown("---")
+    st.session_state.debug = st.sidebar.checkbox(label="show debug info", value=False)
 
 
 # ------------------------------------------
