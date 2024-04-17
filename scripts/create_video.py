@@ -179,7 +179,7 @@ def create_video():
         img_grey = cv2.addWeighted(img_grey, 1, canvas, 10, 0)
 
         # init video ----------------------------------------
-        video_name = os.path.join(path_video, f"{group}_all_images.avi")
+        video_name = os.path.join(path_video, f"{group}_all_images.mp4")
         video = cv2.VideoWriter(
             video_name, fourcc, fps, (img_grey.shape[1], img_grey.shape[0])
         )
@@ -254,10 +254,10 @@ if __name__ == "__main__":
     image_nrs = [207, 95, 203, 81, 271, 176, 193, 272]  # need to be a list
 
     # which scanpaths to use
-    group = "td"
+    group = "asd"
     # sp_nrs = 3  # if int -> sp is used for all images
     sp_nrs = [4, 0, 6, 1, 10, 3, 2, 7]  # ASD
-    sp_nrs = [1, 7, 7, 7, 7, 7, 7, 2]  # TD
+    # sp_nrs = [1, 7, 7, 7, 7, 7, 7, 2]  # TD
 
     # scanpant_settings
     sp_dur_thresh = 2700  # sp must be at least that long
@@ -266,7 +266,8 @@ if __name__ == "__main__":
     join_videos = True
     fps = 30
     L = 3000
-    fourcc = cv2.VideoWriter_fourcc(*"XVID")
+    fourcc = cv2.VideoWriter_fourcc(*"mp4v")
+    # fourcc = cv2.VideoWriter_fourcc(*"XVID")
 
     # circle
     c_radius = 23
