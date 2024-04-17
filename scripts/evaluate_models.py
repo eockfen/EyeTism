@@ -226,14 +226,14 @@ def report(
         ax[cf - 1].set_aspect("equal", "box")
 
         if y_train_proba is not None:
-            fpr, tpr, _ = roc_curve(y_train, y_train_pred)
-            auc = round(roc_auc_score(y_train, y_train_pred), 3)
+            fpr, tpr, _ = roc_curve(y_train, y_train_proba[:, 1])
+            auc = round(roc_auc_score(y_train, y_train_proba[:, 1]), 3)
             RocCurveDisplay(fpr=fpr, tpr=tpr, roc_auc=auc, estimator_name="Train").plot(
                 ax[cf - 1]
             )
         if y_test_proba is not None:
-            fpr, tpr, _ = roc_curve(y_test, y_test_pred)
-            auc = round(roc_auc_score(y_test, y_test_pred), 3)
+            fpr, tpr, _ = roc_curve(y_test, y_test_proba[:, 1])
+            auc = round(roc_auc_score(y_test, y_test_proba[:, 1]), 3)
             RocCurveDisplay(fpr=fpr, tpr=tpr, roc_auc=auc, estimator_name="Test").plot(
                 ax[cf - 1]
             )
