@@ -12,8 +12,40 @@ def init_vars():
     img_s = glob.glob(os.path.join("images", "stimuli", "*.png"))
     st.session_state.opt = {
         "images": sorted([int(s.split("/")[-1].split(".")[0]) for s in img_s]),
-        "sp_idx_asd": {81: 1, 95: 0, 176: 3, 193: 2, 203: 6, 207: 4, 271: 10, 272: 7},
-        "sp_idx_td": {81: 7, 95: 7, 176: 7, 193: 7, 203: 7, 207: 1, 271: 7, 272: 2},
+        "sp_idx_asd": {
+            47: 3,
+            81: 1,
+            95: 0,
+            96: 9,
+            138: 4,
+            166: 9,
+            176: 3,
+            191: 8,
+            193: 2,
+            203: 6,
+            207: 4,
+            253: 9,
+            271: 10,
+            272: 7,
+            287: 10,
+        },
+        "sp_idx_td": {
+            47: 4,
+            81: 7,
+            95: 7,
+            96: 1,
+            138: 9,
+            166: 4,
+            176: 7,
+            191: 0,
+            193: 7,
+            203: 7,
+            207: 1,
+            253: 2,
+            271: 7,
+            272: 2,
+            287: 5,
+        },
     }
 
     DB = pd.read_csv(os.path.join("files", "patients.csv"))
@@ -49,14 +81,15 @@ def init_vars():
 
     if "img2mdl" not in st.session_state:
         st.session_state.img2mdl = {
-            81: "XGB",
-            95: "XGB",
-            176: "XGB",
-            193: "XGB",
-            203: "XGB",
-            207: "XGB",
-            271: "XGB",
-            272: "XGB",
+            47: "NB_s",
+            95: "SVC",
+            96: "NB_s",
+            138: "RF",
+            166: "KNN_s",
+            191: "KNN_s",
+            203: "SVC",
+            253: "XGB",
+            287: "SVC",
         }
 
 
