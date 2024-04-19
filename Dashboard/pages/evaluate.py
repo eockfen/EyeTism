@@ -53,6 +53,11 @@ if go_analyse:
     df = fct.clean_features(df)
     time.sleep(0.75)
 
+    # load classifiers
+    prog_bar.progress(65, text="load classifiers")
+    clf = fct.predict(df)
+    time.sleep(0.75)
+
     # run predictions
     prog_bar.progress(70, text="predict TD/ASD")
     pred, proba = fct.predict(df)

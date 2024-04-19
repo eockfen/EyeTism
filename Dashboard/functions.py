@@ -6,7 +6,6 @@ import numpy as np
 import datetime
 import utils as ut
 import scripts.calc_features as feat
-
 # import utils as ut
 
 
@@ -187,10 +186,23 @@ def extract_features():
 def clean_features(df):
     # set id as index
     df = df.set_index("img", drop=True)
-    df = df.drop(columns=[col for col in df.columns if "_obj" in col])  # drop 'object' columns
+    df = df.drop(
+        columns=[col for col in df.columns if "_obj" in col]
+    )  # drop 'object' columns
     df = df[df["sp_fix_duration_ms_total"] <= 5000]
 
     return df
+
+
+def load_classifiers():
+    clf = {
+        "RF": pickle.load(open(os.path.join("models", "RF.pickle"), "rb")),
+        "XGB": pickle.load(open(os.path.join("models", "XGB.pickle"), "rb")),
+        "SVC": pickle.load(open(os.path.join("models", "SVC.pickle"), "rb")),
+        "NB_stckd": pickle.load(open(os.path.join("models", "NB_s.pickle"), "rb")),
+        "KNN_stckd": pickle.load(open(os.path.join("models", "KNN_s.pickle"), "rb")),
+    }
+    return clf
 
 
 def predict(df):
