@@ -91,6 +91,14 @@ def init_vars():
             253: "XGB",
             287: "SVC",
         }
+    if "mdl_thresh" not in st.session_state:
+        st.session_state.mdl_thresh = {
+            "RF": 0.38,
+            "XGB": 0.42,
+            "SVC": 0.36,
+            "KNN_s": 0.44,
+            "NB_s": 0.16,
+        }
 
 
 # ------------------------------------------

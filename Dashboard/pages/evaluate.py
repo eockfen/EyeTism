@@ -45,31 +45,34 @@ ut.h_spacer(0)
 # feedback
 if go_analyse:
     # extract features
-    prog_bar.progress(5, text="extracting features")
+    prog_bar.progress(3, text="extracting features")
     df = fct.extract_features()
 
     # clean up features
-    prog_bar.progress(50, text="preprocessing features")
+    prog_bar.progress(45, text="preprocessing features")
     df = fct.clean_features(df)
-    time.sleep(0.75)
+    time.sleep(0.5)
 
     # load classifiers
-    prog_bar.progress(65, text="load classifiers")
-    clf = fct.predict(df)
-    time.sleep(0.75)
+    prog_bar.progress(50, text="load classifiers")
+    clf = fct.load_classifiers()
+    time.sleep(0.5)
 
     # run predictions
-    prog_bar.progress(70, text="predict TD/ASD")
-    pred, proba = fct.predict(df)
-    time.sleep(0.75)
+    prog_bar.progress(60, text="predict TD/ASD")
+    pred, proba = fct.predict(df, clf)
+    asd = fct.hard_vote(pred)
+    time.sleep(0.5)
 
-    prog_bar.progress(95, text="visualizing results")
+    prog_bar.progress(90, text="visualizing results")
     time.sleep(2)
 
     prog_bar.progress(100, text="done")
 
     if st.session_state.debug:
         st.dataframe(df)
+        st.write(pred)
+        st.write(proba)
 
 # ------------------------------------------------------------
 if st.session_state.debug:

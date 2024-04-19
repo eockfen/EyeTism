@@ -199,24 +199,37 @@ def load_classifiers():
         "RF": pickle.load(open(os.path.join("models", "RF.pickle"), "rb")),
         "XGB": pickle.load(open(os.path.join("models", "XGB.pickle"), "rb")),
         "SVC": pickle.load(open(os.path.join("models", "SVC.pickle"), "rb")),
-        "NB_stckd": pickle.load(open(os.path.join("models", "NB_s.pickle"), "rb")),
-        "KNN_stckd": pickle.load(open(os.path.join("models", "KNN_s.pickle"), "rb")),
+        "NB_s": pickle.load(open(os.path.join("models", "NB_s.pickle"), "rb")),
+        "KNN_s": pickle.load(open(os.path.join("models", "KNN_s.pickle"), "rb")),
     }
     return clf
 
 
-def predict(df):
+def predict(df, clf):
     pred = []
     proba = []
+
     for img in df.index.tolist():
         X = df.loc[[img]]
         mdl = st.session_state.img2mdl[img]
-        with open(os.path.join("models", f"{mdl}.pickle"), "rb") as f:
-            clf = pickle.load(f)
-        pred.append(clf.predict(X)[0])
-        proba.append(clf.predict_proba(X)[0])
+        if "_s" in mdl:
+            svc_proba_test = clf["SVC"].predict_proba(X)
+            xgb_proba_test = clf["XGB"].predict_proba(X)
+            rf_proba_test = clf["RF"].predict_proba(X)
+
+            X_stacked = np.column_stack((svc_proba_test, xgb_proba_test, rf_proba_test))
+            proba.append(clf[mdl].predict_proba(X_stacked)[0][1])
+        else:
+            proba.append(clf[mdl].predict_proba(X)[0][1])
+
+        pred.append((proba[-1] > st.session_state.mdl_thresh[mdl]) * 1)
 
     return pred, proba
+
+
+def hard_vote(pred):
+
+    return 1
 
 
 # --- if script is run by it's own --------------------------------------------
