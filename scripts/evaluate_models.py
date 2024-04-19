@@ -204,7 +204,10 @@ def report(
             plt.title("Confusion Matrix for Train")
             plt.xlabel("Predicted")
             plt.ylabel("Actual")
-            ax[cf - 1].set_box_aspect(1)
+            if nfig == 1:
+                ax.set_box_aspect(1)
+            else:
+                ax[cf - 1].set_box_aspect(1)
             cf += 1
         if y_test_pred is not None:  # test set
             plt.subplot(1, nfig, cf)
@@ -218,24 +221,28 @@ def report(
             plt.title("Confusion Matrix for Test")
             plt.xlabel("Predicted")
             plt.ylabel("Actual")
-            ax[cf - 1].set_box_aspect(1)
+            if nfig == 1:
+                ax.set_box_aspect(1)
+            else:
+                ax[cf - 1].set_box_aspect(1)
             cf += 1
 
     # ROC curve
     if y_train_proba is not None or y_test_proba is not None:
-        ax[cf - 1].set_aspect("equal", "box")
+        axx = ax if nfig == 1 else ax[cf - 1]
+        axx.set_aspect("equal", "box")
 
         if y_train_proba is not None:
             fpr, tpr, _ = roc_curve(y_train, y_train_proba[:, 1])
             auc = round(roc_auc_score(y_train, y_train_proba[:, 1]), 3)
             RocCurveDisplay(fpr=fpr, tpr=tpr, roc_auc=auc, estimator_name="Train").plot(
-                ax[cf - 1]
+                axx
             )
         if y_test_proba is not None:
             fpr, tpr, _ = roc_curve(y_test, y_test_proba[:, 1])
             auc = round(roc_auc_score(y_test, y_test_proba[:, 1]), 3)
             RocCurveDisplay(fpr=fpr, tpr=tpr, roc_auc=auc, estimator_name="Test").plot(
-                ax[cf - 1]
+                axx
             )
 
     plt.tight_layout()
