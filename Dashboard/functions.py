@@ -323,7 +323,7 @@ def save_scanpath_figs():
                 [sp.loc[sp["idx"] == r - 1]["x"], sp.loc[sp["idx"] == r]["x"]],
                 [sp.loc[sp["idx"] == r - 1]["y"], sp.loc[sp["idx"] == r]["y"]],
                 lw=6,
-                c="#002fff",
+                c="#2c94ea",
             )
 
         # add fixations for individual plot
