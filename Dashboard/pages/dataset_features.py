@@ -19,14 +19,16 @@ st.markdown("---")
 st.header('The Dataset and Features')
 
 st.subheader('About the Data')
+place = st.text("")
 
 st.write("""
-The dataset has been provided by the organizing committee of the Grand Challenge Saliency4ASD from Shanghai Jiao Tong University, China, and Université de Nantes, France.
-It is readily available for download. For contact information, access to the data, and further details, please visit the [official website](https://saliency4asd.ls2n.fr/).
+The dataset has been provided by the organizing committee of the Grand Challenge Saliency4ASD from Shanghai Jiao Tong University, China, and Université de Nantes, France. It is readily available for download. For contact information, 
+         access to the data, and further details, please visit the [official website](https://saliency4asd.ls2n.fr/).
 
-The dataset consists of 300 images from the MIT1003 dataset. In multiple sessions, 14 typically developed (TD) children and 14 high-functioning ASD children, aged 5 to 12 years, were instructed to view each image. 
-Each image was displayed for 3 seconds, followed by a 1-second grey image. The gaze behavior of the participants was recorded. 
-The resulting scanpaths were aggregated per patient class and image, as depicted in the schema below.
+The dataset consists of 300 images from the MIT1003 dataset. 
+         In multiple sessions, 14 typically developed (TD) children and 14 high-functioning ASD children, aged 5 to 12 years, were instructed to view each image. 
+         Each image was displayed for 3 seconds, followed by a 1-second grey image.
+         The gaze behavior of the participants was recorded. The resulting scanpaths were aggregated per patient class and image, as depicted in the schema below.
 """)
 
 
@@ -48,11 +50,12 @@ def display_images(folder_path, start_index, num_images=6):
             break  # Stop if the image file doesn't exist
 
 # Path to the folder containing your images
-folder_path = "../data/Saliency4ASD/TrainingData/Images"
+folder_path = "images/Saliency4ASD/TrainingData/Images"
 
 # Slider to control the starting index of images
+st.text("")
 start_index = st.slider("Select starting index", 0, len(os.listdir(folder_path)) - 6, 0, step=6)
-
+st.text("")
 # Display the images
 display_images(folder_path, start_index)
 
@@ -60,21 +63,24 @@ st.markdown("**Scanpaths**")
 
 st.write(""" 
 The scanpaths contain information about where, how long, and how often the participant has looked during the 3-second period when the picture was displayed. 
-The position of the eye gaze is depicted as x and y coordinates on the pixels of the image, along with the duration of fixation in milliseconds, representing **fixation points**.
-The movement between two fixation points is called **saccades**. 
-Along with these metrics, a multitude of features can be calculated. which are explained in detail in our (repository)[add Link].
+         The position of the eye gaze is depicted as x and y coordinates on the pixels of the image, along with the duration of fixation in milliseconds, 
+         representing **fixation points**. The movement between two fixation points is called **saccades**. Along with these metrics, a multitude of features can be calculated,
+          which are explained in detail in our (repository)[add Link].
 """)
 
 
 # Path to the folder containing images
-image_folder = "../data/Saliency4ASD/TrainingData/Images/"
+image_folder = "images/Saliency4ASD/TrainingData/Images/"
 # Path to the folder containing scanpaths
-scanpath_folder = "../data/Saliency4ASD/TrainingData/"
+scanpath_folder = "images/Saliency4ASD/TrainingData/"
 # Path to the folder containing fixation points
-fixpts_folder = "../data/Saliency4ASD/AdditionalData/"
+fixpts_folder = "images/Saliency4ASD/AdditionalData/"
 # Path to the folder containing heatmaps
-heatmaps_folder = "../data/Saliency4ASD/AdditionalData/"
-
+heatmaps_folder = "images/Saliency4ASD/AdditionalData/"
+saliency_deepgaze_folder = "images/saliency_predictions/DeepGazeIIE/"
+saliency_sam_resnet_folder = "images/saliency_predictions/sam_resnet/"
+object_det_folder = "images/object_dt/"
+object_sp_folder = "images/individual/"
 # Get a list of all image files
 image_files = sorted(os.listdir(image_folder), key=lambda x: int(x.split(".")[0]))
 
@@ -114,7 +120,7 @@ with st.expander('Show Scanpaths'):
         df_ASD = pd.read_csv(os.path.join(scanpath_folder, "ASD/ASD_scanpath_" + selected_image[:-4] + ".txt"))
         st.markdown("<h2 style='text-align: center;'>ASD</h2>", unsafe_allow_html=True)
         st.dataframe(df_ASD.style.apply(lambda row: ['background-color: yellow' if row['Idx'] == 0 else '' for _ in row], axis=1))
-
+st.text("")
 
 st.markdown("**Heatmaps**")
 
@@ -135,17 +141,94 @@ with st.expander('Show Heatmaps'):
     with col6:
         st.markdown("<h2 style='text-align: center;'>ASD</h2>", unsafe_allow_html=True)
         st.image(os.path.join(heatmaps_folder, "ASD_HeatMaps/" + selected_image[:-4] + "_h.png"))
-
+st.text("")
 st.markdown('**Object and Face recognition**')
+st.write("""
+Visual attention is drawn to various elements within images, 
+         such as expansive landscapes or highly concentrated objects like people, faces, animals, buildings, and everyday items.
+         With [Mediapipe](https://developers.google.com/mediapipe/solutions/vision/object_detector), the objects can be attributed to the fixation points.
+""")
+
+with st.expander('Show images with object and face recognition'):
+    col7, col8_1, col8_2 = st.columns(3)
+    with col7:
+        st.markdown("<h4 style='text-align: center;'>Object Detection </h4>", unsafe_allow_html=True)
+        st.image(os.path.join(object_det_folder, selected_image[:-4] + ".png"))
+
+    with col8_1: 
+        st.markdown("<h4 style='text-align: center;'>TD</h4>", unsafe_allow_html=True)
+        td_folder = os.path.join(object_sp_folder, "TD")
+        td_image_number = int(selected_image[:-4])
+        td_image_files = sorted([file for file in os.listdir(td_folder) if file.startswith(f"td_{td_image_number:03}")])
+        td_scanpaths = [f"Scanpath {i.split('_')[2][:-4]}" for i in td_image_files]  # Remove the '.png' extension
+        selected_td_image = st.selectbox('Select TD gaze sequence:', td_scanpaths)
+        st.image(os.path.join(td_folder, td_image_files[td_scanpaths.index(selected_td_image)]))
+
+    with col8_2: 
+        st.markdown("<h4 style='text-align: center;'>ASD</h4>", unsafe_allow_html=True)
+        asd_folder = os.path.join(object_sp_folder, "ASD")
+        asd_image_number = int(selected_image[:-4])
+        asd_image_files = sorted([file for file in os.listdir(asd_folder) if file.startswith(f"asd_{asd_image_number:03}")])
+        asd_scanpaths = [f"Scanpath {i.split('_')[2][:-4]}" for i in asd_image_files]  # Remove the '.png' extension
+        selected_asd_image = st.selectbox('Select ASD gaze sequence:', asd_scanpaths)
+        st.image(os.path.join(asd_folder, asd_image_files[asd_scanpaths.index(selected_asd_image)]))
 
 
+
+# with st.expander('Show images with object and face recognition'):
+#     col7, col8_1, col8_2 = st.columns(3)
+#     with col7:
+#         st.markdown("<h4 style='text-align: center;'>Object Detection </h4>", unsafe_allow_html=True)
+#         st.image(os.path.join(object_det_folder, selected_image[:-4] + ".png"))
+
+#     with col8_1: 
+#         st.markdown("<h4 style='text-align: center;'>TD</h4>", unsafe_allow_html=True)
+#         td_folder = os.path.join(object_sp_folder, "TD")
+#         td_image_number = int(selected_image[:-4])
+#         td_image_files = sorted([file for file in os.listdir(td_folder) if file.startswith(f"td_{td_image_number:03}")])
+#         selected_td_image = st.selectbox('Select TD gaze sequence:', td_image_files)
+#         st.image(os.path.join(td_folder, selected_td_image))
+
+#     with col8_2: 
+#         st.markdown("<h4 style='text-align: center;'>ASD</h4>", unsafe_allow_html=True)
+#         asd_folder = os.path.join(object_sp_folder, "ASD")
+#         asd_image_number = int(selected_image[:-4])
+#         asd_image_files = sorted([file for file in os.listdir(asd_folder) if file.startswith(f"asd_{asd_image_number:03}")])
+#         selected_asd_image = st.selectbox('Select ASD gaze sequence:', asd_image_files)
+#         st.image(os.path.join(asd_folder, selected_asd_image))
+
+
+
+        
+
+st.text("")
 
 st.markdown("**Saliency**")
 st.write('''Images can also be feed  to Saliency Models, which try to predict the features drawing the visual attention of humans.
-         These in turn can be compared to our actual scanpaths and into account as additional features. There are several models available, a selection 
-         is available [here](https://saliency.tuebingen.ai/datasets.html).
+         These in turn can be compared to our actual scanpaths and taken into account as additional features. For our tool, we decided on the most actual models available, [DeepGaze IIe](https://github.com/mpatacchiola/deepgaze) 
+         and [SAM_ResNet](https://github.com/marcellacornia/sam). There are several models available, a selection 
+         is provided [here](https://saliency.tuebingen.ai/datasets.html).
       
         ''')
 
+with st.expander('Show Saliency Maps'):
+    col9, col10, col11 = st.columns(3)
+    
+    with col9:
+        st.markdown("<h4 style='text-align: center;'>Original Image</h4>", unsafe_allow_html=True)
+        st.image(os.path.join(image_folder, selected_image))
+
+    with col10:
+        st.markdown("<h4 style='text-align: center;'>DeepGazeIIe</h4>", unsafe_allow_html=True)
+        st.image(os.path.join(saliency_deepgaze_folder, selected_image))
+
+    with col11: 
+        st.markdown("<h4 style='text-align: center;'>SAM_ResNET</h4>", unsafe_allow_html=True)
+        st.image(os.path.join(saliency_sam_resnet_folder, selected_image[:-4] + ".jpg"))  # Adjust file extension to JPG
 
 
+
+st.text("")
+st.markdown("---")
+st.write("""All of these steps represent a part of the features, which will be feed into our model.
+         For a detailed description of our feature engineering, please see our [repository](Placeholer)""")
