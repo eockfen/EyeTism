@@ -9,4 +9,7 @@ ut.create_menu()
 
 st.title("About us")
 st.markdown("---")
+st.subheader("The team")
+st.image('images/team.png')
+
 

@@ -34,26 +34,26 @@ with st.expander("**Atypical Gaze Behavior**"):
     st.write("""
         Individuals with ASD often exhibit atypical gaze behavior compared to neurotypical individuals. This includes differences in how they distribute their gaze across social and nonsocial stimuli.
     """)
-
+st.text("")
 with st.expander("**Reduced Eye Contact**"):
     st.write("""
         One of the hallmark characteristics of ASD is reduced eye contact. Individuals with ASD may avoid or have difficulty maintaining eye contact during social interactions, which can impact communication and social bonding.
     """)
-
+st.text("")
 with st.expander("**Preference for Nonsocial Stimuli**"):
     st.write("""
         Eye-tracking studies have shown that individuals with ASD may demonstrate a preference for nonsocial stimuli, such as objects or patterns, over social stimuli like faces or facial expressions. This preference may contribute to challenges in social communication and interaction.
     """)
-
+st.text("")
 with st.expander("**Focus on Specific Features**"):
     st.write("""
         When individuals with ASD do engage with social stimuli, they may focus more on specific features rather than the whole picture. For example, they may focus on the mouth rather than the eyes when looking at faces, which can affect their ability to interpret social cues accurately.
     """)
-
+st.text("")
 with st.expander("**Variability Across Individuals**"):
     st.write("""
         It's important to note that gaze patterns can vary widely among individuals with ASD. Factors such as age, cognitive abilities, and co-occurring conditions can influence gaze behavior, leading to a diverse range of responses in eye-tracking studies.
     """)
-
+st.text("")
 st.write('Understanding the gaze patterns of individuals with ASD can aid researchers and clinicians in developing tailored interventions and support strategies to enhance social communication skills and improve quality of life.')
 # """)
