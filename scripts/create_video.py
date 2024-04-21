@@ -111,8 +111,11 @@ def create_video():
 
         # grey screen ------------------------------------
         img_grey = np.ones((common[1], common[0], 3), np.uint8) * 200
+
+        # fix_cross screen ------------------------------------
+        img_fix = np.ones((common[1], common[0], 3), np.uint8) * 200
         cv2.drawMarker(
-            img_grey,
+            img_fix,
             (int(common[0] / 2), int(common[1] / 2)),
             (0, 0, 0),
             cv2.MARKER_CROSS,
@@ -120,7 +123,7 @@ def create_video():
             fc_lw,
         )
         # Draw the circle on the canvas
-        canvas = np.zeros_like(img_grey)
+        canvas = np.zeros_like(img_fix)
         cv2.circle(
             canvas,
             (int(common[0] / 2), int(common[1] / 2)),
@@ -132,18 +135,32 @@ def create_video():
             canvas, (int(common[0] / 2), int(common[1] / 2)), c_radius, c_color, -1
         )
         # put both together
-        img_grey = cv2.addWeighted(img_grey, 1, canvas, 10, 0)
+        img_fix_circle = cv2.addWeighted(img_fix, 1, canvas, 10, 0)
 
         # init video ----------------------------------------
         video_name = os.path.join(path_video, f"{group}_all_images.mp4")
         video = cv2.VideoWriter(
-            video_name, fourcc, fps, (img_grey.shape[1], img_grey.shape[0])
+            video_name, fourcc, fps, (img_fix.shape[1], img_fix.shape[0])
         )
 
-        # 3-sec-grey-screen
-        for frame in range(2*fps):
-            # Write frame
+        # 1-sec-grey-screen
+        for frame in range(fps):
             video.write(img_grey)
+
+        # countdown-screen
+        for t in range(3, 0, -1):
+            for frame in range(fps):
+                img_cnt = np.ones((common[1], common[0], 3), np.uint8) * 200
+                cv2.putText(
+                    img_cnt,
+                    str(t),
+                    (int(common[0] / 2) - 60, int(common[1] / 2) + 60),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    6,
+                    (0, 0, 0),
+                    12,
+                )
+                video.write(img_cnt)
 
         # loop images ----------------------------------------
         for i, img in enumerate(imgs):
@@ -151,15 +168,14 @@ def create_video():
             sp = sps[i]
 
             # prepare image on grey background
-            img_full = img_grey.copy()
+            img_full = img_fix.copy()
             x_off = int((img_full.shape[1] - img.shape[1]) / 2)
             y_off = int((img_full.shape[0] - img.shape[0]) / 2)
             img_full[y_off:y_off + img.shape[0], x_off:x_off + img.shape[1]] = img
 
             # 1-sec-grey-screen
             for frame in range(fps):
-                # Write frame
-                video.write(img_grey)
+                video.write(img_fix_circle)
 
             # 3-sec-image
             for frame in range(frames):
@@ -201,9 +217,9 @@ def create_video():
                 video.write(output_image)
 
         # 2-sec-grey-screen
-        for frame in range(1*fps):
+        for frame in range(1 * fps):
             # Write frame
-            video.write(img_grey)
+            video.write(img_fix)
 
         cv2.destroyAllWindows()
         video.release()
@@ -266,13 +282,13 @@ if __name__ == "__main__":
     # images to generate as videos
     # n = 14
     # image_nrs = [95] * n  # need to be a list
-    image_nrs = [47, 95, 96, 138, 166, 191, 203, 253, 287]  # need to be a list
+    image_nrs = [203, 47, 95, 96, 138, 166, 191, 253, 287]  # need to be a list
 
     # which scanpaths to use
-    # group = "asd"
-    # sp_nrs = [3, 0, 9, 4, 9, 8, 6, 9, 10]  # ASD
-    group = "td"
-    sp_nrs = [4, 7, 1, 9, 4, 0, 7, 2, 5]  # TD
+    group = "asd"
+    sp_nrs = [6, 3, 0, 9, 4, 9, 8, 9, 10]  # ASD
+    # group = "td"
+    # sp_nrs = [7, 4, 7, 1, 9, 4, 0, 2, 5]  # TD
     # sp_nrs = list(range(n))  # if int -> sp is used for all images
 
     # scanpant_settings
@@ -292,7 +308,7 @@ if __name__ == "__main__":
     c_edge_lw = 8
 
     # scanpath_lines
-    sp_color = (0, 255, 0)
+    sp_color = (0, 0, 255)
     sp_lw = 2
 
     # fix_cross
@@ -305,3 +321,7 @@ if __name__ == "__main__":
 
     # ------ create video ----------------------------------------
     create_video()
+
+    # -----
+    # ffmpeg -y -i td_all_images.mp4 -vcodec libx264 eyetism/td.mp4
+    # ffmpeg -y -i asd_all_images.mp4 -vcodec libx264 eyetism/asd.mp4
