@@ -1,11 +1,17 @@
 import os
 import pickle
-import streamlit as st
-import pandas as pd
-import numpy as np
 import datetime
+import numpy as np
 import utils as ut
+import pandas as pd
+import streamlit as st
+import imageio.v3 as iio
+import matplotlib.pyplot as plt
+import matplotlib.patches as patches
+
+import functions as fct
 import scripts.calc_features as feat
+
 # import utils as ut
 
 
@@ -211,7 +217,7 @@ def predict(df, clf):
 
     for img in df.index.tolist():
         X = df.loc[[img]]
-        mdl = st.session_state.img2mdl[img]
+        mdl = st.session_state.img2mdl[img]["mdl"]
         if "_s" in mdl:
             svc_proba_test = clf["SVC"].predict_proba(X)
             xgb_proba_test = clf["XGB"].predict_proba(X)
@@ -228,8 +234,129 @@ def predict(df, clf):
 
 
 def hard_vote(pred):
+    hv = int(np.mean(pred).round(0))
+    return "Autism Spectrum Disorder" if hv == 1 else "Typical Developed"
 
-    return 1
+
+def save_scanpath_figs():
+    # load precalculated faces & objects
+    detected_faces = pickle.load(open(os.path.join("models", "faces.pickle"), "rb"))
+    detected_objects = pickle.load(open(os.path.join("models", "objects.pickle"), "rb"))
+
+    # filename
+    id = st.session_state.eval_pat.split(":")[0]
+    rec_date = ut.ugly_date(st.session_state.eval_meas)
+    csv_file = os.path.join("recordings", f"id-{id}_{rec_date}.csv")
+
+    # create folder if not there
+    path_evaluation = os.path.join("evaluation", f"id-{id}_{rec_date}")
+    if not os.path.exists(path_evaluation):
+        os.makedirs(path_evaluation)
+
+    # loop images
+    sps = fct.load_scanpath(csv_file)
+    for sp in sps:
+        # img
+        img_nr = sp["img"].iloc[0]
+
+        # load image
+        img = iio.imread(os.path.join("images", "stimuli", f"{img_nr}.png"))
+        plt.figure(
+            figsize=(round(img.shape[1] * 0.02), round(img.shape[0] * 0.02)),
+            frameon=False,
+        )
+        ax = plt.gca()
+        ax.set_axis_off()
+        ax.imshow(img)
+
+        # add faces
+        faces = detected_faces[img_nr]
+        for face in faces:
+            left, top, w, h = face
+            rect = patches.Rectangle(
+                (left, top),
+                w,
+                h,
+                linewidth=2,
+                edgecolor="r",
+                facecolor="none",
+            )
+            ax.add_patch(rect)
+
+        # add objects
+        objects = detected_objects[img_nr]
+        for obj in objects:
+            # name & score
+            obj_name = obj["name"]
+            bbox_coords = obj["bbox"]
+
+            # add rectangle
+            rect = patches.Rectangle(
+                (bbox_coords[0], bbox_coords[1]),
+                bbox_coords[2],
+                bbox_coords[3],
+                linewidth=2,
+                edgecolor="orange",
+                facecolor="none",
+            )
+            ax.add_patch(rect)
+
+            # add label
+            txt_name = f"{obj_name}"
+            plt.text(
+                bbox_coords[0],
+                bbox_coords[1],
+                txt_name,
+                fontsize=6,
+                backgroundcolor="orange",
+                verticalalignment="top",
+            )
+
+        # style
+        plt.ylim(img.shape[0] - 1, 0)
+        plt.xlim(0, img.shape[1] - 1)
+        plt.tight_layout
+
+        # add saccades
+        for r in range(1, sp.shape[0]):
+            plt.plot(
+                [sp.loc[sp["idx"] == r - 1]["x"], sp.loc[sp["idx"] == r]["x"]],
+                [sp.loc[sp["idx"] == r - 1]["y"], sp.loc[sp["idx"] == r]["y"]],
+                lw=6,
+                c="#002fff",
+            )
+
+        # add fixations for individual plot
+        s_min = 20
+        s_max = 100
+        sp["size"] = (sp["duration"] - np.min(sp["duration"])) / (
+            np.max(sp["duration"]) - np.min(sp["duration"])
+        ) * (s_max - s_min) + s_min
+        sp["size"] = sp["size"].astype(int)
+
+        for r in range(sp.shape[0]):
+            ms = sp.loc[sp["idx"] == r]["size"].values
+            plt.plot(
+                sp.loc[sp["idx"] == r]["x"],
+                sp.loc[sp["idx"] == r]["y"],
+                "o",
+                color="#2c94ea",
+                mec="w",
+                mew=1.5,
+                ms=ms[0],
+                alpha=0.8,
+            )
+
+        # save plot
+        plt.savefig(
+            os.path.join(path_evaluation, f"{img_nr}.png"),
+            dpi=100,
+            bbox_inches="tight",
+            pad_inches=0,
+        )
+
+        # close plot
+        plt.close()
 
 
 # --- if script is run by it's own --------------------------------------------

@@ -37,15 +37,16 @@ ut.h_spacer(height=3)
 st.subheader("Start Recording")
 
 # choose example -----
-example = st.radio(
+st.radio(
     "choose an example:",
     options=["Typical Developed", "ASD"],
     horizontal=True,
     label_visibility="visible",
+    key="record_example"
 )
 
 # load video -----
-if example == "ASD":
+if st.session_state.record_example == "ASD":
     video_file = open("videos/asd.mp4", "rb")
 else:
     video_file = open("videos/td.mp4", "rb")
@@ -55,13 +56,13 @@ video_bytes = video_file.read()
 st.video(video_bytes)
 
 # save recording ---------------------------------------------
-# button
+# button -----
 saved = st.button(
     "Save Recording",
     on_click=fct.save_recording,
     args=(
         rec_patient,
-        example,
+        st.session_state.record_example,
     ),
 )
 

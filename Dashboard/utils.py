@@ -8,42 +8,30 @@ import utils as ut
 
 # initialize session_state variabled ------------------------------------------
 def init_vars():
-    # fetch images from images folder
+    # fetch scanpath from images folder
     img_s = glob.glob(os.path.join("images", "stimuli", "*.png"))
     st.session_state.opt = {
         "images": sorted([int(s.split("/")[-1].split(".")[0]) for s in img_s]),
         "sp_idx_asd": {
             47: 3,
-            81: 1,
             95: 0,
             96: 9,
             138: 4,
             166: 9,
-            176: 3,
             191: 8,
-            193: 2,
             203: 6,
-            207: 4,
             253: 9,
-            271: 10,
-            272: 7,
             287: 10,
         },
         "sp_idx_td": {
             47: 4,
-            81: 7,
             95: 7,
             96: 1,
             138: 9,
             166: 4,
-            176: 7,
             191: 0,
-            193: 7,
             203: 7,
-            207: 1,
             253: 2,
-            271: 7,
-            272: 2,
             287: 5,
         },
     }
@@ -59,6 +47,9 @@ def init_vars():
             f"{int(r['id'])}: {r['name']} (age: {int(r['age'])})"
             for (_, r) in st.session_state.pat_db.iterrows()
         ]
+
+    if "record_example" not in st.session_state:
+        st.session_state.record_example = "Typical Developed"
 
     if "last_saved_recording" not in st.session_state:
         st.session_state.last_saved_recording = None
@@ -81,15 +72,21 @@ def init_vars():
 
     if "img2mdl" not in st.session_state:
         st.session_state.img2mdl = {
-            47: "NB_s",
-            95: "SVC",
-            96: "NB_s",
-            138: "RF",
-            166: "KNN_s",
-            191: "KNN_s",
-            203: "SVC",
-            253: "XGB",
-            287: "SVC",
+            47: {"mdl": "NB_s", "name": "Naive Bayes - stacked on RF+XGB+SVC"},
+            95: {"mdl": "SVC", "name": "Support Vector Classifier"},
+            96: {"mdl": "NB_s", "name": "Naive Bayes - stacked on RF+XGB+SVC"},
+            138: {"mdl": "RF", "name": "Random Forest"},
+            166: {
+                "mdl": "KNN_s",
+                "name": "K Nearest Neighbors - stacked on RF+XGB+SVC",
+            },
+            191: {
+                "mdl": "KNN_s",
+                "name": "K Nearest Neighbors - stacked on RF+XGB+SVC",
+            },
+            203: {"mdl": "SVC", "name": "Support Vector Classifier"},
+            253: {"mdl": "XGB", "name": "XGBoost"},
+            287: {"mdl": "SVC", "name": "Support Vector Classifier"},
         }
     if "mdl_thresh" not in st.session_state:
         st.session_state.mdl_thresh = {

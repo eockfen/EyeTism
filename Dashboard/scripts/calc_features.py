@@ -70,7 +70,7 @@ def scanpath(rec_file: str) -> pd.DataFrame:
 # region SALIENCY -------------------------------------------------
 def saliency(rec_file: str) -> pd.DataFrame:
     curdir = os.path.dirname(__file__)
-    path_smaps = os.path.join(curdir, "..", "files", "saliency_predictions")
+    path_smaps = os.path.join(curdir, "..", "images", "sal_pred")
     sal_dict = {"sam_resnet": "sam_", "DeepGazeIIE": "dg_"}
 
     # instantiate df
