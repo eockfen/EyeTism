@@ -1,17 +1,20 @@
 import streamlit as st
 import utils as ut
 
-# setup vars, menu, style, and so on --------------------
-st.set_page_config(layout="wide")  # need to be first 'st' command !!!
-ut.init_vars()
+# load default style settings
 ut.default_style()
+
+# sidebar menu
 ut.create_menu()
 
-# home --------------------------------------------------
-st.image('images/Logo_Eyetism.png', use_column_width="auto")
-st.text("")
-st.write("""Welcome to our dashboard. This site displays the results of our Capstone Project from the neuefische Data Science Bootcamp HH-24-1.
-        
+st.title("Capstone Project")
+st.markdown("---")
+
+
+
+
+
+st.write("""This tool stems from the Capstone Project from the neuefische Data Science Bootcamp HH-24-1.
 As a group, we committed ourselves to dive deep into the potential of AI and machine learning in the healthcare sector.
          
 The Capstone Project itself was inspired by the [Grand Challenge Saliency4ASD: Visual attention modeling for Autism Spectrum Disorder](https://www.sciencedirect.com/science/article/pii/S0923596520302150)
