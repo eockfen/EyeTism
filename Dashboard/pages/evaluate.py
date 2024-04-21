@@ -36,6 +36,7 @@ with col_recording:
     )
 
 with col_btn:
+    go_analyse = False
     if st.session_state.eval_meas:
         go_analyse = st.button(
             "Analyse",
