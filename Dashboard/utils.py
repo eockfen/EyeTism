@@ -9,9 +9,8 @@ import utils as ut
 # initialize session_state variabled ------------------------------------------
 def init_vars():
     # fetch scanpath from images folder
-    img_s = glob.glob(os.path.join("images", "stimuli", "*.png"))
     st.session_state.opt = {
-        "images": sorted([int(s.split("/")[-1].split(".")[0]) for s in img_s]),
+        "images": [203, 47, 95, 96, 138, 166, 191, 253, 287],
         "sp_idx_asd": {
             47: 3,
             95: 0,
@@ -101,9 +100,8 @@ def init_vars():
 # ------------------------------------------
 def create_menu():
     # sidebar menu
-    st.sidebar.image('images/Logo_wide.png', width=200, use_column_width="never")
+    st.sidebar.image("images/Logo_wide.png", width=200, use_column_width="never")
     st.sidebar.page_link("app.py", label="Capstone Project")
-    #st.sidebar.page_link("pages/about_Capstone.py", label="Capstone Project")
     st.sidebar.page_link("pages/about_ASD.py", label="About ASD")
     st.sidebar.page_link("pages/dataset_features.py", label="Dataset & Features")
     st.sidebar.page_link("pages/models.py", label="Models")
