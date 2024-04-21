@@ -30,9 +30,9 @@ def load_scanpath():
 
         # make sure, that it is long enough (> threshold)
         img_sp = loaded_sp[sp_nr[i]]
-        while img_sp.duration.sum() < sp_dur_thresh:
-            sp_nr[i] = sp_nr[i] + 1
-            img_sp = loaded_sp[sp_nr[i]]
+        # while img_sp.duration.sum() < sp_dur_thresh:
+        #     sp_nr[i] = sp_nr[i] + 1
+        #     img_sp = loaded_sp[sp_nr[i]]
 
         # set new index
         img_sp = img_sp.set_index("idx")
@@ -40,15 +40,21 @@ def load_scanpath():
         # crop too long scanpaths
         if img_sp.duration.sum() > 3000:
             time_cutoff = np.argmax(img_sp.duration.cumsum() > 3000)
-            img_sp = img_sp.iloc[:time_cutoff, :]
+            if time_cutoff == 0:
+                img_sp = img_sp.iloc[0:1, :]
+                img_sp.loc[img_sp.index == 0, "duration"] = 3000
+            else:
+                img_sp = img_sp.iloc[:time_cutoff, :]
 
         # extend last fix to end of 3000 ms
         if img_sp.duration.sum() < 3000:
             add_dur = (3000 - img_sp.duration.sum()) / img_sp.shape[0]
-            img_sp["duration"] = img_sp["duration"].apply(lambda x: x+add_dur).astype(int)
+            img_sp["duration"] = (
+                img_sp["duration"].apply(lambda x: x + add_dur).astype(int)
+            )
 
         if img_sp.duration.sum() > 3000:
-            raise 'duration > 3000 ms ! check this our...'
+            raise "duration > 3000 ms ! check this our..."
 
         # further calculations
         img_sp.duration = img_sp.duration / 1000
@@ -93,57 +99,7 @@ def create_video():
     imgs = load_images()
     sps, sp_nrs = load_scanpath()
 
-    if not join_videos:
-        for i, img in enumerate(imgs):
-            # ------ get scanpath ----------------------------------------
-            sp = sps[i]
-
-            # ------ init video ----------------------------------------
-            video_name = os.path.join(
-                path_video, f"{group}_img{image_nrs[i]}_sp{sp_nrs[i]}.avi"
-            )
-            video = cv2.VideoWriter(
-                video_name, fourcc, fps, (img.shape[1], img.shape[0])
-            )
-
-            # ------ print frames ----------------------------------------
-            for frame in range(frames):
-                # find coordinates for this frame
-                coord_idx = np.argmax(frame < sp.max_frame)
-                x = sp.loc[coord_idx, "x"]
-                y = sp.loc[coord_idx, "y"]
-
-                # Draw the circle on the canvas
-                canvas = np.zeros_like(img)
-                cv2.circle(canvas, (x, y), c_radius, c_edge_color, c_edge_lw)
-                cv2.circle(
-                    canvas, (x, y), c_radius, c_color, -1
-                )  # -1 -> fills the circle
-
-                # Draw scanpath
-                cv2.line(
-                    canvas,
-                    (int(img.shape[1] / 2), int(img.shape[0] / 2)),
-                    (int(sp["x"][0]), int(sp["y"][0])),
-                    sp_color,
-                    sp_lw,
-                )
-                for idx in range(coord_idx):
-                    x0, y0 = sp.loc[idx, ["x", "y"]]
-                    x1, y1 = sp.loc[idx + 1, ["x", "y"]]
-                    cv2.line(
-                        canvas, (int(x0), int(y0)), (int(x1), int(y1)), sp_color, sp_lw
-                    )
-
-                # Overlay the circle canvas on top of the original image
-                output_image = cv2.addWeighted(img, 1, canvas, 2, 0)
-
-                # Write frame
-                video.write(output_image)
-
-            cv2.destroyAllWindows()
-            video.release()
-    else:
+    if join_videos:
         print("__print experimental video__")
         # first, find common canvas -----------------------
         common_x = []
@@ -183,6 +139,11 @@ def create_video():
         video = cv2.VideoWriter(
             video_name, fourcc, fps, (img_grey.shape[1], img_grey.shape[0])
         )
+
+        # 3-sec-grey-screen
+        for frame in range(2*fps):
+            # Write frame
+            video.write(img_grey)
 
         # loop images ----------------------------------------
         for i, img in enumerate(imgs):
@@ -236,14 +197,66 @@ def create_video():
                 # Overlay the circle canvas on top of the original image
                 output_image = cv2.addWeighted(img_full, 1, canvas, 4, 0)
 
-                # cv2.imshow("test", output_image)
-                # cv2.waitKey(0)
+                # Write frame
+                video.write(output_image)
+
+        # 2-sec-grey-screen
+        for frame in range(1*fps):
+            # Write frame
+            video.write(img_grey)
+
+        cv2.destroyAllWindows()
+        video.release()
+    else:
+        for i, img in enumerate(imgs):
+            # ------ get scanpath ----------------------------------------
+            sp = sps[i]
+
+            # ------ init video ----------------------------------------
+            video_name = os.path.join(
+                path_video, f"{group}_img{image_nrs[i]}_sp{sp_nrs[i]}.avi"
+            )
+            video = cv2.VideoWriter(
+                video_name, fourcc, fps, (img.shape[1], img.shape[0])
+            )
+
+            # ------ print frames ----------------------------------------
+            for frame in range(frames):
+                # find coordinates for this frame
+                coord_idx = np.argmax(frame < sp.max_frame)
+                x = sp.loc[coord_idx, "x"]
+                y = sp.loc[coord_idx, "y"]
+
+                # Draw the circle on the canvas
+                canvas = np.zeros_like(img)
+                cv2.circle(canvas, (x, y), c_radius, c_edge_color, c_edge_lw)
+                cv2.circle(
+                    canvas, (x, y), c_radius, c_color, -1
+                )  # -1 -> fills the circle
+
+                # Draw scanpath
+                cv2.line(
+                    canvas,
+                    (int(img.shape[1] / 2), int(img.shape[0] / 2)),
+                    (int(sp["x"][0]), int(sp["y"][0])),
+                    sp_color,
+                    sp_lw,
+                )
+                for idx in range(coord_idx):
+                    x0, y0 = sp.loc[idx, ["x", "y"]]
+                    x1, y1 = sp.loc[idx + 1, ["x", "y"]]
+                    cv2.line(
+                        canvas, (int(x0), int(y0)), (int(x1), int(y1)), sp_color, sp_lw
+                    )
+
+                # Overlay the circle canvas on top of the original image
+                output_image = cv2.addWeighted(img, 1, canvas, 2, 0)
 
                 # Write frame
                 video.write(output_image)
 
-        cv2.destroyAllWindows()
-        video.release()
+            cv2.destroyAllWindows()
+            video.release()
 
 
 # --- if script is run by it's own --------------------------------------------
@@ -251,16 +264,19 @@ if __name__ == "__main__":
     curdir = os.path.dirname(__file__)
 
     # images to generate as videos
-    image_nrs = [207, 95, 203, 81, 271, 176, 193, 272]  # need to be a list
+    # n = 14
+    # image_nrs = [95] * n  # need to be a list
+    image_nrs = [47, 95, 96, 138, 166, 191, 203, 253, 287]  # need to be a list
 
     # which scanpaths to use
-    group = "asd"
-    # sp_nrs = 3  # if int -> sp is used for all images
-    sp_nrs = [4, 0, 6, 1, 10, 3, 2, 7]  # ASD
-    # sp_nrs = [1, 7, 7, 7, 7, 7, 7, 2]  # TD
+    # group = "asd"
+    # sp_nrs = [3, 0, 9, 4, 9, 8, 6, 9, 10]  # ASD
+    group = "td"
+    sp_nrs = [4, 7, 1, 9, 4, 0, 7, 2, 5]  # TD
+    # sp_nrs = list(range(n))  # if int -> sp is used for all images
 
     # scanpant_settings
-    sp_dur_thresh = 2700  # sp must be at least that long
+    sp_dur_thresh = 2500  # sp must be at least that long
 
     # video settings - per image
     join_videos = True

@@ -525,6 +525,100 @@ def process_detections(detections, img_file, path_obj_recog):
     return detections
 
 
+def draw_objects_faces(fn, ax, face_locations, detection_result, labels: bool = True):
+    plt.figure(fn)
+    # add faces
+    for fl in face_locations:
+        top, right, bottom, left = fl
+        rect = patches.Rectangle(
+            (left, top),
+            right - left,
+            bottom - top,
+            linewidth=2,
+            edgecolor="r",
+            facecolor="none",
+        )
+        ax.add_patch(rect)
+
+    # add objects
+    for _, detection in enumerate(detection_result.detections):
+        # add rectangle
+        rect = patches.Rectangle(
+            (
+                detection.bounding_box.origin_x,
+                detection.bounding_box.origin_y,
+            ),
+            detection.bounding_box.width,
+            detection.bounding_box.height,
+            linewidth=2,
+            edgecolor="orange",
+            facecolor="none",
+        )
+        ax.add_patch(rect)
+
+        # name & score
+        if labels:
+            obj_name = detection.categories[0].category_name
+            obj_score = detection.categories[0].score
+
+            # add label
+            txt_name = f"{_}: {obj_name}"
+            txt_score = f"{obj_score*100:.2f}%"
+            plt.text(
+                detection.bounding_box.origin_x,
+                detection.bounding_box.origin_y,
+                txt_name,
+                fontsize=6,
+                backgroundcolor="orange",
+                verticalalignment="top",
+            )
+            plt.text(
+                detection.bounding_box.origin_x + detection.bounding_box.width,
+                detection.bounding_box.origin_y + detection.bounding_box.height,
+                txt_score,
+                fontsize=6,
+                verticalalignment="bottom",
+                horizontalalignment="right",
+                bbox={"alpha": 0.5, "color": "w"},
+            )
+
+
+def draw_scanpath(fn, sp):
+    plt.figure(fn)
+    # add saccades
+    for r in range(1, sp.shape[0]):
+        plt.plot(
+            [sp.loc[sp["idx"] == r - 1]["x"], sp.loc[sp["idx"] == r]["x"]],
+            [sp.loc[sp["idx"] == r - 1]["y"], sp.loc[sp["idx"] == r]["y"]],
+            lw=4,
+            c="#2c94ea",
+        )
+
+    # add fixations for individual plot
+    s_min = 10
+    s_max = 50
+    if (sp["duration"].shape[0] == 1) or (sp["duration"].std() == 0):
+        sp["size"] = (s_max + s_min) / 2
+    else:
+        sp["size"] = (sp["duration"] - np.min(sp["duration"])) / (
+            np.max(sp["duration"]) - np.min(sp["duration"])
+        ) * (s_max - s_min) + s_min
+        sp["size"] = sp["size"].astype(int)
+
+    for r in range(sp.shape[0]):
+        ms = sp.loc[sp["idx"] == r]["size"].values
+        plt.plot(
+            sp.loc[sp["idx"] == r]["x"],
+            sp.loc[sp["idx"] == r]["y"],
+            "o",
+            color="#2c94ea",
+            mec="w",
+            mew=2,
+            ms=ms[0],
+            alpha=0.8,
+        )
+
+
 # Main function
 def calculate_object_detection_features(
     sp_file: str,
@@ -682,89 +776,95 @@ def calculate_object_detection_features(
         # ----- save figure to "images/obj_recog_results/" ----------
         if obj_save_fig:
             # create folder if not there
-            path_individual = os.path.join(path_obj_recog, "individual")
-            if not os.path.exists(path_individual):
-                os.makedirs(path_individual)
+            path_objects = os.path.join(path_obj_recog, "objects")
+            path_scanpath = os.path.join(path_obj_recog, "scanpath")
+            path_sp_obj = os.path.join(path_obj_recog, "sp_obj")
+            if not os.path.exists(path_objects):
+                os.makedirs(path_objects)
+            if not os.path.exists(path_scanpath):
+                os.makedirs(path_scanpath)
+            if not os.path.exists(path_sp_obj):
+                os.makedirs(path_sp_obj)
 
             img = iio.imread(img_file)
-            plt.figure(
-                figsize=(round(img.shape[1] * 0.015), round(img.shape[0] * 0.015))
-            )
-            ax = plt.gca()
-            ax.imshow(img)
 
-            # add faces
-            for fl in face_locations:
-                top, right, bottom, left = fl
-                rect = patches.Rectangle(
-                    (left, top),
-                    right - left,
-                    bottom - top,
-                    linewidth=2,
-                    edgecolor="r",
-                    facecolor="none",
-                )
-                ax.add_patch(rect)
-
-            # add objects
-            for _, detection in enumerate(detection_result.detections):
-                # name & score
-                obj_name = detection.categories[0].category_name
-                obj_score = detection.categories[0].score
-
-                # add rectangle
-                rect = patches.Rectangle(
-                    (detection.bounding_box.origin_x, detection.bounding_box.origin_y),
-                    detection.bounding_box.width,
-                    detection.bounding_box.height,
-                    linewidth=2,
-                    edgecolor="orange",
-                    facecolor="none",
-                )
-                ax.add_patch(rect)
-
-                # add label
-                txt_name = f"{_}: {obj_name}"
-                txt_score = f"{obj_score*100:.2f}%"
-                plt.text(
-                    detection.bounding_box.origin_x,
-                    detection.bounding_box.origin_y,
-                    txt_name,
-                    fontsize=6,
-                    backgroundcolor="orange",
-                    verticalalignment="top",
-                )
-                plt.text(
-                    detection.bounding_box.origin_x + detection.bounding_box.width,
-                    detection.bounding_box.origin_y + detection.bounding_box.height,
-                    txt_score,
-                    fontsize=6,
-                    verticalalignment="bottom",
-                    horizontalalignment="right",
-                    bbox={"alpha": 0.35, "color": "w"},
-                )
-
-            # style
-            plt.ylim(img.shape[0] - 1, 0)
-            plt.xlim(0, img.shape[1] - 1)
-            plt.tight_layout
-
-            # save detected objects for first scanpath
+            # fig 4 objects --------------------
             if sp_i == 0:
-                plt.savefig(
-                    os.path.join(path_obj_recog, os.path.basename(img_file)), dpi=100
+                plt.figure(
+                    1,
+                    figsize=(round(img.shape[1] * 0.015), round(img.shape[0] * 0.015)),
+                    frameon=False,
                 )
+                ax = plt.gca()
+                ax.set_axis_off()
+                ax.imshow(img)
 
-            # add fixations for individual plot
+                draw_objects_faces(1, ax, face_locations, detection_result)
+
+                plt.ylim(img.shape[0] - 1, 0)
+                plt.xlim(0, img.shape[1] - 1)
+                plt.tight_layout
+
+                plt.savefig(
+                    os.path.join(path_objects, os.path.basename(img_file)),
+                    dpi=100,
+                    bbox_inches="tight",
+                    pad_inches=0,
+                )
+                plt.close()
+
+            # fig 4 gaze behaviour --------------------
             if obj_individuals:
-                plt.plot(sp["x"], sp["y"], "+", color="k", mew=3, ms=40)
-                plt.plot(sp["x"], sp["y"], "o", color="w", mec="r", mew=1.5, ms=10)
+                # fig 4 gaze behaviour --------------------
+                plt.figure(
+                    2,
+                    figsize=(round(img.shape[1] * 0.015), round(img.shape[0] * 0.015)),
+                    frameon=False,
+                )
+                ax = plt.gca()
+                ax.set_axis_off()
+                ax.imshow(img)
 
-                # save plot
-                plt.savefig(os.path.join(path_individual, f"{id}.png"), dpi=100)
+                draw_scanpath(2, sp)
 
-            # close plot
-            plt.close()
+                plt.ylim(img.shape[0] - 1, 0)
+                plt.xlim(0, img.shape[1] - 1)
+                plt.tight_layout
+
+                plt.savefig(
+                    os.path.join(path_scanpath, f"{id}.png"),
+                    dpi=100,
+                    bbox_inches="tight",
+                    pad_inches=0,
+                )
+                plt.close()
+
+                # fig 4 objetcs & gaze behaviour --------------------
+                plt.figure(
+                    3,
+                    figsize=(round(img.shape[1] * 0.015), round(img.shape[0] * 0.015)),
+                    frameon=False,
+                )
+                ax = plt.gca()
+                ax.set_axis_off()
+                ax.imshow(img)
+
+                draw_objects_faces(
+                    3, ax, face_locations, detection_result, labels=False
+                )
+                draw_scanpath(3, sp)
+
+                plt.ylim(img.shape[0] - 1, 0)
+                plt.xlim(0, img.shape[1] - 1)
+                plt.tight_layout
+
+                plt.savefig(
+                    os.path.join(path_sp_obj, f"{id}.png"),
+                    dpi=100,
+                    bbox_inches="tight",
+                    pad_inches=0,
+                )
+                plt.close()
 
     return df
 
