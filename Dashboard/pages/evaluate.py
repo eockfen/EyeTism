@@ -93,11 +93,22 @@ if go_analyse:
 
     # visualize results ---------------
     prog_bar.progress(90, text="visualize results")
+    time.sleep(1)
+    prog_bar.progress(100, text="done")
+
     # container > RESULTS
-    con_res = st.container(border=True)
+    with st.container(border=True):
+        ut.h_spacer(1)
+        st.caption("classified as:")
+        st.title(f"{asd}")
+        st.divider()
+        st.markdown(
+            f"Eye movement data for **{sum(pred)}** (of {len(pred)}) images indicates ASD."
+        )
+        ut.h_spacer(1)
 
     # container > DETAILS
-    with st.expander(label="...", expanded=False):
+    with st.container(border=True):
         abc = "ABCDEFGHIJKLMNOP"
         ut.h_spacer(1)
         st.subheader("Overview of results for individual images")
@@ -175,19 +186,6 @@ if go_analyse:
                 with c23:
                     st.caption("TD Heatmap")
                     st.image(file_img_td_hm)
-
-    prog_bar.progress(100, text="done")
-
-    # done loading images ---------------
-    with con_res:
-        ut.h_spacer(1)
-        st.caption("classified as:")
-        st.title(f"{asd}")
-        st.divider()
-        st.markdown(
-            f"Eye movement data for **{sum(pred)}** (of {len(pred)}) images indicates ASD."
-        )
-        ut.h_spacer(1)
 
     if st.session_state.debug:
         st.dataframe(df)

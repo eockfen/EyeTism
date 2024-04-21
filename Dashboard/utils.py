@@ -105,16 +105,16 @@ def create_menu():
     st.sidebar.page_link("pages/about_ASD.py", label="About ASD")
     st.sidebar.page_link("pages/dataset_features.py", label="Dataset & Features")
     st.sidebar.page_link("pages/models.py", label="Models")
-    st.sidebar.page_link("pages/about_ET.py", label="About 'EyeTism'")
+    # st.sidebar.page_link("pages/about_ET.py", label="About 'EyeTism'")
     st.sidebar.page_link("pages/about_us.py", label="About Us")
     st.sidebar.markdown("---")
     st.sidebar.markdown("# Diagnostics")
     st.sidebar.page_link("pages/patients.py", label="Patients")
     st.sidebar.page_link("pages/recording.py", label="Record")
     st.sidebar.page_link("pages/evaluate.py", label="Evaluate")
-    ut.h_spacer(7, sb=True)
     st.sidebar.markdown("---")
-    st.session_state.debug = st.sidebar.checkbox(label="show debug info", value=False)
+    ut.h_spacer(7, sb=True)
+    # st.session_state.debug = st.sidebar.checkbox(label="show debug info", value=False)
 
 
 # ------------------------------------------
