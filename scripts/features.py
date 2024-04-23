@@ -19,35 +19,6 @@ else:
     import utils as ut
 
 
-# --- TEMPLATE 4 new features based on SCANPATH_*.txt fiels -------------------
-def calculate_XXX_features(sp_file: str) -> pd.DataFrame:
-    """calculate XXXXXXXXX features for *.txt file
-
-    Args:
-        sp_file (str): path to scanpath_*.txt
-
-    Returns:
-        DatFrame: pd.DatFrame containing calculated features
-    """
-    # instantiate df
-    df = None
-
-    # loop scanpaths
-    sps = ut.load_scanpath(sp_file)
-    for sp_i, sp in enumerate(sps):
-        # id
-        id = ut.get_sp_id(sp_file, sp_i)
-        df_XXX = pd.DataFrame(pd.Series(id), columns=["id"])
-
-        # -------- any features ------------------
-        df_XXX["dummy_feature_name"] = len(sp)
-
-        # concat to df
-        df = pd.concat([df, df_XXX], ignore_index=True)
-
-    return df
-
-
 # --- here are the scan_path features calculated for a given file -------------
 def calculate_sp_features(sp_file: str) -> pd.DataFrame:
     """calculate SCAN_PATH features for *.txt file
@@ -200,7 +171,6 @@ def calculate_saliency_features(sp_file: str, mdl: str = "sam_resnet") -> pd.Dat
 
 
 # --- object detection features based on SCANPATH_*.txt files and images ------
-# Create an ObjectDetector object.
 def get_object_detector_object():
     curdir = os.path.dirname(__file__)
     mdl_pth = os.path.join(
@@ -217,7 +187,6 @@ def get_object_detector_object():
     return detector
 
 
-# Check for intersection of object bounding box and scanpath coordinates
 def intersect(rect1, rect2):
     x1, y1, w1, h1 = rect1
     x2, y2, w2, h2 = rect2
@@ -235,7 +204,6 @@ def intersect(rect1, rect2):
         return False
 
 
-# test if obejct is animate
 def is_animate(x):
     animate = [
         "person",
@@ -918,11 +886,8 @@ def get_features(
             obj_individuals=obj_individuals,
             obj_save_fig=obj_save_fig,
         )
-        df_file = df_file.merge(df_obj, on="id")
 
-        # TEMPLATE: extract XXXXX features
-        # df_XXX = calculate_XXX_features(sp_file)
-        # df_file = df_file.merge(df_XXX, on="id")
+        df_file = df_file.merge(df_obj, on="id")
 
         # concat file_df to complete_df
         df = pd.concat([df, df_file], ignore_index=True)
@@ -975,8 +940,5 @@ if __name__ == "__main__":
 
 
 # Feature Selector for Pipelines
-# Prepare the X for each Model based on it's features
-
-# Define the feature selector function
 def feature_selector(df, features_to_keep):
     return df[features_to_keep]
