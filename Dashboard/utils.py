@@ -50,6 +50,9 @@ def init_vars():
     if "record_example" not in st.session_state:
         st.session_state.record_example = "Typical Developed"
 
+    if "debug" not in st.session_state:
+        st.session_state.debug = False
+
     if "last_saved_recording" not in st.session_state:
         st.session_state.last_saved_recording = None
 
