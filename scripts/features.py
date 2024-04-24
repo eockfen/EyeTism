@@ -19,6 +19,11 @@ else:
     import utils as ut
 
 
+# Feature Selector for sk-learn-pipelines -------------------------------------
+def feature_selector(df, features_to_keep):
+    return df[features_to_keep]
+
+
 # --- here are the scan_path features calculated for a given file -------------
 def calculate_sp_features(sp_file: str) -> pd.DataFrame:
     """calculate SCAN_PATH features for *.txt file
@@ -840,7 +845,7 @@ def calculate_object_detection_features(
 # --- main function to get scan_path features ---------------------------------
 def get_features(
     who: str = None,
-    sal_mdl: str = "DeepGazeIIE",
+    sal_mdl: str = None,
     obj_individuals: bool = True,
     obj_save_fig: bool = True,
     slc=None,
@@ -876,8 +881,24 @@ def get_features(
         df_file = calculate_sp_features(sp_file)
 
         # extract saliency features
-        df_sal = calculate_saliency_features(sp_file, mdl=sal_mdl)
-        df_file = df_file.merge(df_sal, on="id")
+        if sal_mdl is None:
+            # -> based on DeepGazeIIE
+            df_sal = calculate_saliency_features(sp_file, mdl="DeepGazeIIE")
+            df_sal = df_sal.rename(
+                columns={col: "dg_" + col for col in df_sal.columns if "sal_" in col}
+            )
+            df_file = df_file.merge(df_sal, on="id")
+
+            # -> based on Sam_ResNET
+            df_sal = calculate_saliency_features(sp_file, mdl="sam_resnet")
+            df_sal = df_sal.rename(
+                columns={col: "dg_" + col for col in df_sal.columns if "sal_" in col}
+            )
+            df_file = df_file.merge(df_sal, on="id")
+        else:
+            # -> from 'input_parameter'
+            df_sal = calculate_saliency_features(sp_file, mdl=sal_mdl)
+            df_file = df_file.merge(df_sal, on="id")
 
         # extract object detection features
         df_obj = calculate_object_detection_features(
@@ -938,7 +959,6 @@ if __name__ == "__main__":
     # os.mkdir(path_obj_recog)
     # calculate_object_detection_features(sp_file, path_obj_recog)
 
-
-# Feature Selector for Pipelines
-def feature_selector(df, features_to_keep):
-    return df[features_to_keep]
+    path_df = os.path.join("..", "data", "df_deep_sam.csv")
+    df = get_features()
+    df.to_csv(path_df, index=False)
