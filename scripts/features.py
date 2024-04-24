@@ -19,33 +19,9 @@ else:
     import utils as ut
 
 
-# --- TEMPLATE 4 new features based on SCANPATH_*.txt fiels -------------------
-def calculate_XXX_features(sp_file: str) -> pd.DataFrame:
-    """calculate XXXXXXXXX features for *.txt file
-
-    Args:
-        sp_file (str): path to scanpath_*.txt
-
-    Returns:
-        DatFrame: pd.DatFrame containing calculated features
-    """
-    # instantiate df
-    df = None
-
-    # loop scanpaths
-    sps = ut.load_scanpath(sp_file)
-    for sp_i, sp in enumerate(sps):
-        # id
-        id = ut.get_sp_id(sp_file, sp_i)
-        df_XXX = pd.DataFrame(pd.Series(id), columns=["id"])
-
-        # -------- any features ------------------
-        df_XXX["dummy_feature_name"] = len(sp)
-
-        # concat to df
-        df = pd.concat([df, df_XXX], ignore_index=True)
-
-    return df
+# Feature Selector for sk-learn-pipelines -------------------------------------
+def feature_selector(df, features_to_keep):
+    return df[features_to_keep]
 
 
 # --- here are the scan_path features calculated for a given file -------------
@@ -200,7 +176,6 @@ def calculate_saliency_features(sp_file: str, mdl: str = "sam_resnet") -> pd.Dat
 
 
 # --- object detection features based on SCANPATH_*.txt files and images ------
-# Create an ObjectDetector object.
 def get_object_detector_object():
     curdir = os.path.dirname(__file__)
     mdl_pth = os.path.join(
@@ -217,7 +192,6 @@ def get_object_detector_object():
     return detector
 
 
-# Check for intersection of object bounding box and scanpath coordinates
 def intersect(rect1, rect2):
     x1, y1, w1, h1 = rect1
     x2, y2, w2, h2 = rect2
@@ -235,7 +209,6 @@ def intersect(rect1, rect2):
         return False
 
 
-# test if obejct is animate
 def is_animate(x):
     animate = [
         "person",
@@ -872,7 +845,7 @@ def calculate_object_detection_features(
 # --- main function to get scan_path features ---------------------------------
 def get_features(
     who: str = None,
-    sal_mdl: str = "DeepGazeIIE",
+    sal_mdl: str = None,
     obj_individuals: bool = True,
     obj_save_fig: bool = True,
     slc=None,
@@ -908,8 +881,24 @@ def get_features(
         df_file = calculate_sp_features(sp_file)
 
         # extract saliency features
-        df_sal = calculate_saliency_features(sp_file, mdl=sal_mdl)
-        df_file = df_file.merge(df_sal, on="id")
+        if sal_mdl is None:
+            # -> based on DeepGazeIIE
+            df_sal = calculate_saliency_features(sp_file, mdl="DeepGazeIIE")
+            df_sal = df_sal.rename(
+                columns={col: "dg_" + col for col in df_sal.columns if "sal_" in col}
+            )
+            df_file = df_file.merge(df_sal, on="id")
+
+            # -> based on Sam_ResNET
+            df_sal = calculate_saliency_features(sp_file, mdl="sam_resnet")
+            df_sal = df_sal.rename(
+                columns={col: "dg_" + col for col in df_sal.columns if "sal_" in col}
+            )
+            df_file = df_file.merge(df_sal, on="id")
+        else:
+            # -> from 'input_parameter'
+            df_sal = calculate_saliency_features(sp_file, mdl=sal_mdl)
+            df_file = df_file.merge(df_sal, on="id")
 
         # extract object detection features
         df_obj = calculate_object_detection_features(
@@ -918,11 +907,8 @@ def get_features(
             obj_individuals=obj_individuals,
             obj_save_fig=obj_save_fig,
         )
-        df_file = df_file.merge(df_obj, on="id")
 
-        # TEMPLATE: extract XXXXX features
-        # df_XXX = calculate_XXX_features(sp_file)
-        # df_file = df_file.merge(df_XXX, on="id")
+        df_file = df_file.merge(df_obj, on="id")
 
         # concat file_df to complete_df
         df = pd.concat([df, df_file], ignore_index=True)
@@ -973,10 +959,6 @@ if __name__ == "__main__":
     # os.mkdir(path_obj_recog)
     # calculate_object_detection_features(sp_file, path_obj_recog)
 
-
-# Feature Selector for Pipelines
-# Prepare the X for each Model based on it's features
-
-# Define the feature selector function
-def feature_selector(df, features_to_keep):
-    return df[features_to_keep]
+    path_df = os.path.join("..", "data", "df_deep_sam.csv")
+    df = get_features()
+    df.to_csv(path_df, index=False)
