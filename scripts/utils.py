@@ -111,7 +111,7 @@ def load_saliency_map(sp_file: str, model: str) -> np.array:
     """
     # path
     curdir = os.path.dirname(__file__)
-    path_smaps = os.path.join(curdir, "..", "saliency_predictions")
+    path_smaps = os.path.join(curdir, "..", "data", "saliency_predictions")
 
     # convert sp -> smap
     fname = os.path.basename(sp_file).split("_")[-1].split(".")[0]

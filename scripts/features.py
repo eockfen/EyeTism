@@ -19,11 +19,6 @@ else:
     import utils as ut
 
 
-# Feature Selector for sk-learn-pipelines -------------------------------------
-def feature_selector(df, features_to_keep):
-    return df[features_to_keep]
-
-
 # --- here are the scan_path features calculated for a given file -------------
 def calculate_sp_features(sp_file: str) -> pd.DataFrame:
     """calculate SCAN_PATH features for *.txt file
@@ -236,7 +231,7 @@ def is_animate(x):
     return True if x in animate else False
 
 
-def process_detections(detections, img_file, path_obj_recog):
+def process_detections(detections, img_file, output, path_obj_recog):
     ignore = {
         4: [1, 2, 3, 4, 6, 7],
         10: [3, 4, 5, 6],
@@ -479,21 +474,26 @@ def process_detections(detections, img_file, path_obj_recog):
             if i not in to_delete
         ]
 
-    # file to write
-    ftw = os.path.join(path_obj_recog, f"{img_nr}_scores.txt")
+    if output:
+        path_scores = os.path.join(path_obj_recog, "scores")
+        if not os.path.exists(path_scores):
+            os.makedirs(path_scores)
 
-    # delete previous file
-    if os.path.exists(ftw):
-        os.remove(ftw)
+        # file to write
+        ftw = os.path.join(path_scores, f"{img_nr}_scores.txt")
 
-    # write scores of detected objects
-    with open(ftw, "a+") as file:
-        file.write("\nobj_id obj_name obj_score")
-    for obj_id, detection in enumerate(detections.detections):
-        obj_name = detection.categories[0].category_name
-        obj_score = detection.categories[0].score
+        # delete previous file
+        if os.path.exists(ftw):
+            os.remove(ftw)
+
+        # write scores of detected objects
         with open(ftw, "a+") as file:
-            file.write(f"\n{obj_id} {obj_name} {round(obj_score*100, 3)}")
+            file.write("\nobj_id obj_name obj_score")
+        for obj_id, detection in enumerate(detections.detections):
+            obj_name = detection.categories[0].category_name
+            obj_score = detection.categories[0].score
+            with open(ftw, "a+") as file:
+                file.write(f"\n{obj_id} {obj_name} {round(obj_score*100, 3)}")
 
     return detections
 
@@ -596,8 +596,8 @@ def draw_scanpath(fn, sp):
 def calculate_object_detection_features(
     sp_file: str,
     path_obj_recog: str,
-    obj_individuals: bool = True,
-    obj_save_fig: bool = True,
+    path_ind_sp: str,
+    output: bool = True,
 ) -> pd.DataFrame:
     # instantiate DataFrame
     df = None
@@ -613,7 +613,7 @@ def calculate_object_detection_features(
     detection_result = detector.detect(image)
 
     # fix detections based on manualy defined rules
-    detection_result = process_detections(detection_result, img_file, path_obj_recog)
+    detection_result = process_detections(detection_result, img_file, output, path_obj_recog)
 
     # detect faces
     fr_image = face_recognition.load_image_file(img_file)
@@ -622,9 +622,6 @@ def calculate_object_detection_features(
     # ----- loop through scanpaths ----------
     sps = ut.load_scanpath(sp_file)
     for sp_i, sp in enumerate(sps):
-        if not obj_individuals and sp_i > 0:
-            continue
-
         # id
         id = ut.get_sp_id(sp_file, sp_i)
         df_obj = pd.DataFrame(pd.Series(id), columns=["id"])
@@ -746,14 +743,12 @@ def calculate_object_detection_features(
         # ----- Concatenate to main DataFrame ----------
         df = pd.concat([df, df_obj], ignore_index=True)
 
-        # ----- save figure to "images/obj_recog_results/" ----------
-        if obj_save_fig:
+        # ----- save figure to "data/.../" ----------
+        if output:
             # create folder if not there
-            path_objects = os.path.join(path_obj_recog, "objects")
-            path_scanpath = os.path.join(path_obj_recog, "scanpath")
-            path_sp_obj = os.path.join(path_obj_recog, "sp_obj")
-            if not os.path.exists(path_objects):
-                os.makedirs(path_objects)
+            path_objects = os.path.join(path_obj_recog)
+            path_scanpath = os.path.join(path_ind_sp, "scanpath")
+            path_sp_obj = os.path.join(path_ind_sp, "scanpath_objects")
             if not os.path.exists(path_scanpath):
                 os.makedirs(path_scanpath)
             if not os.path.exists(path_sp_obj):
@@ -787,78 +782,66 @@ def calculate_object_detection_features(
                 plt.close()
 
             # fig 4 gaze behaviour --------------------
-            if obj_individuals:
-                # fig 4 gaze behaviour --------------------
-                plt.figure(
-                    2,
-                    figsize=(round(img.shape[1] * 0.015), round(img.shape[0] * 0.015)),
-                    frameon=False,
-                )
-                ax = plt.gca()
-                ax.set_axis_off()
-                ax.imshow(img)
+            plt.figure(
+                2,
+                figsize=(round(img.shape[1] * 0.015), round(img.shape[0] * 0.015)),
+                frameon=False,
+            )
+            ax = plt.gca()
+            ax.set_axis_off()
+            ax.imshow(img)
 
-                draw_scanpath(2, sp)
+            draw_scanpath(2, sp)
 
-                plt.ylim(img.shape[0] - 1, 0)
-                plt.xlim(0, img.shape[1] - 1)
-                plt.tight_layout
+            plt.ylim(img.shape[0] - 1, 0)
+            plt.xlim(0, img.shape[1] - 1)
+            plt.tight_layout
 
-                plt.savefig(
-                    os.path.join(path_scanpath, f"{id}.png"),
-                    dpi=100,
-                    bbox_inches="tight",
-                    pad_inches=0,
-                )
-                plt.close()
+            plt.savefig(
+                os.path.join(path_scanpath, f"{id}.png"),
+                dpi=100,
+                bbox_inches="tight",
+                pad_inches=0,
+            )
+            plt.close()
 
-                # fig 4 objetcs & gaze behaviour --------------------
-                plt.figure(
-                    3,
-                    figsize=(round(img.shape[1] * 0.015), round(img.shape[0] * 0.015)),
-                    frameon=False,
-                )
-                ax = plt.gca()
-                ax.set_axis_off()
-                ax.imshow(img)
+            # fig 4 objetcs & gaze behaviour --------------------
+            plt.figure(
+                3,
+                figsize=(round(img.shape[1] * 0.015), round(img.shape[0] * 0.015)),
+                frameon=False,
+            )
+            ax = plt.gca()
+            ax.set_axis_off()
+            ax.imshow(img)
 
-                draw_objects_faces(
-                    3, ax, face_locations, detection_result, labels=False
-                )
-                draw_scanpath(3, sp)
+            draw_objects_faces(
+                3, ax, face_locations, detection_result, labels=False
+            )
+            draw_scanpath(3, sp)
 
-                plt.ylim(img.shape[0] - 1, 0)
-                plt.xlim(0, img.shape[1] - 1)
-                plt.tight_layout
+            plt.ylim(img.shape[0] - 1, 0)
+            plt.xlim(0, img.shape[1] - 1)
+            plt.tight_layout
 
-                plt.savefig(
-                    os.path.join(path_sp_obj, f"{id}.png"),
-                    dpi=100,
-                    bbox_inches="tight",
-                    pad_inches=0,
-                )
-                plt.close()
+            plt.savefig(
+                os.path.join(path_sp_obj, f"{id}.png"),
+                dpi=100,
+                bbox_inches="tight",
+                pad_inches=0,
+            )
+            plt.close()
 
     return df
 
 
 # --- main function to get scan_path features ---------------------------------
 def get_features(
+    output: bool = True,
     who: str = None,
     sal_mdl: str = None,
-    obj_individuals: bool = True,
-    obj_save_fig: bool = True,
     slc=None,
 ) -> pd.DataFrame:
-    """main function to get all the features. implement more functions here, if
-    you want to add more features, i.e. saliency, or object driven ones
-
-    Args:
-        who (str, optional): specify if only sub-group should be calculated. Defaults to None.
-
-    Returns:
-        DataFrame: pd.DataFrane containing scanpath features
-    """
     # get files
     sp_files = sorted(ut.get_sp_files(who))
 
@@ -871,9 +854,13 @@ def get_features(
 
     # delete obj_recog files
     curdir = os.path.dirname(__file__)
-    path_obj_recog = os.path.join(curdir, "..", "data", "obj_recog")
-    if not os.path.exists(path_obj_recog):
-        os.mkdir(path_obj_recog)
+    path_obj_recog = os.path.join(curdir, "..", "data", "obj_detection")
+    path_ind_sp = os.path.join(curdir, "..", "data", "individual_scanpaths")
+    if output:
+        if not os.path.exists(path_obj_recog):
+            os.mkdir(path_obj_recog)
+        if not os.path.exists(path_ind_sp):
+            os.mkdir(path_ind_sp)
 
     # loop sp files
     for sp_file in tqdm(sp_files):
@@ -892,7 +879,7 @@ def get_features(
             # -> based on Sam_ResNET
             df_sal = calculate_saliency_features(sp_file, mdl="sam_resnet")
             df_sal = df_sal.rename(
-                columns={col: "dg_" + col for col in df_sal.columns if "sal_" in col}
+                columns={col: "sam_" + col for col in df_sal.columns if "sal_" in col}
             )
             df_file = df_file.merge(df_sal, on="id")
         else:
@@ -903,9 +890,9 @@ def get_features(
         # extract object detection features
         df_obj = calculate_object_detection_features(
             sp_file,
-            path_obj_recog=path_obj_recog,
-            obj_individuals=obj_individuals,
-            obj_save_fig=obj_save_fig,
+            path_obj_recog,
+            path_ind_sp,
+            output=output,
         )
 
         df_file = df_file.merge(df_obj, on="id")
