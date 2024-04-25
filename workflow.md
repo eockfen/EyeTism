@@ -94,3 +94,4 @@ how we obtained the final models, which were evaluated on the 30-image-test-set 
 
 Finally, we evaluate the 8 models on our 30-image-test-set. See `FINAL_EVALUATION.ipynb` for the results.
 
+![final images](images/final_set.png)

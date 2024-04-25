@@ -67,11 +67,23 @@ val_set = [
     "72.png",
     "88.png",
 ]
+final_set = [
+    "47.png",
+    "95.png",
+    "96.png",
+    "138.png",
+    "166.png",
+    "191.png",
+    "203.png",
+    "253.png",
+    "287.png",
+]
 
 
 def main():
     cur_dir = os.path.dirname(__file__)
 
+    # val set
     plt.figure(figsize=(10, 10))
     for i, file in enumerate(val_set):
         img = iio.imread(
@@ -90,6 +102,7 @@ def main():
     plt.tight_layout()
     plt.savefig(os.path.join(cur_dir, "..", "images", "val_set.png"), dpi=150)
 
+    # test set
     plt.figure(figsize=(10, 10))
     for i, file in enumerate(tst_set):
         img = iio.imread(
@@ -107,6 +120,25 @@ def main():
 
     plt.tight_layout()
     plt.savefig(os.path.join(cur_dir, "..", "images", "tst_set.png"), dpi=150)
+
+    # final set
+    plt.figure(figsize=(10, 10))
+    for i, file in enumerate(final_set):
+        img = iio.imread(
+            os.path.join(
+                cur_dir, "..", "data", "Saliency4ASD", "TrainingData", "Images", file
+            )
+        )
+
+        plt.subplot(3, 3, i + 1)
+        plt.imshow(img)
+        plt.title(file)
+        plt.tick_params(
+            left=False, right=False, labelleft=False, labelbottom=False, bottom=False
+        )
+
+    plt.tight_layout()
+    plt.savefig(os.path.join(cur_dir, "..", "images", "final_set.png"), dpi=150)
 
 
 # --- if script is run by it's own --------------------------------------------
