@@ -19,11 +19,6 @@ else:
     import utils as ut
 
 
-# Feature Selector for sk-learn-pipelines -------------------------------------
-def feature_selector(df, features_to_keep):
-    return df[features_to_keep]
-
-
 # --- here are the scan_path features calculated for a given file -------------
 def calculate_sp_features(sp_file: str) -> pd.DataFrame:
     """calculate SCAN_PATH features for *.txt file
