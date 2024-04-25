@@ -884,7 +884,7 @@ def get_features(
             # -> based on Sam_ResNET
             df_sal = calculate_saliency_features(sp_file, mdl="sam_resnet")
             df_sal = df_sal.rename(
-                columns={col: "dg_" + col for col in df_sal.columns if "sal_" in col}
+                columns={col: "sam_" + col for col in df_sal.columns if "sal_" in col}
             )
             df_file = df_file.merge(df_sal, on="id")
         else:
