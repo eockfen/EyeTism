@@ -18,7 +18,7 @@ def individual_maps(path_im, sal_mdl: str = "dg"):
     path_f = os.path.join(path_im, "fix")
     path_d = os.path.join(path_im, "dur")
     path_s = os.path.join(path_im, "sal" + "_" + sal_mdl)
-    path_3 = os.path.join(path_im, "rgb" + "_" + sal_mdl)
+    path_3 = os.path.join(path_im, "fds" + "_" + sal_mdl)
 
     if not os.path.exists(path_f):
         os.makedirs(path_f)
