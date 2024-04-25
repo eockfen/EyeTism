@@ -17,7 +17,12 @@ pip install -r requirements.txt
 ```
 
 # 2. extract data from zip files
-run python script in scripts folder:
+first, you need to download the following zip archives and store them in the `/source` folder:
+- [Salieny4ASD Dataset](https://github.com/eockfen/EyeTism/releases/download/v0.1.0/Saliency4ASD.zip)
+- [Salieny Predictions](https://github.com/eockfen/EyeTism/releases/download/v0.1.0/saliency_predictions.zip)
+- [SAM original](https://github.com/eockfen/EyeTism/releases/download/v0.1.0/SAM_original.zip)
+
+then, run python script in scripts folder:
 
 ``` terminal
 cd ./scripts
