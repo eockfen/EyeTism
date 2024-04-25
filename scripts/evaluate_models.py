@@ -34,8 +34,8 @@ from scripts import utils as ut
 # saving a model --------------------------------------------------------------
 def save_model(
     m,
-    file: str = "some_model.pickle",
-    folder: str = None,
+    file: str,
+    folder: str,
     overwrite: bool = False,
 ):
     """Saves models into "models" folder. If filename already exists, a number
@@ -47,13 +47,10 @@ def save_model(
         overwrite (bool): flag to indicate if model can be overwritten.
                             Defaults to False.
     """
-    # defaults
-    if folder is None:
-        folder = os.path.join("..", "models")
-    else:
-        folder = os.path.join("..", "models", folder)
-        if not os.path.exists(folder):
-            os.makedirs(folder)
+    # folder
+    folder = os.path.join(folder)
+    if not os.path.exists(folder):
+        os.makedirs(folder)
 
     # path to file & split into filename + extensiopn
     path_file = os.path.join(folder, f"{file}")
@@ -77,7 +74,7 @@ def save_model(
 def fit_or_load(
     mdl, X_train, y_train, file, folder: str = None, overwrite: bool = False
 ):
-    filename = os.path.join("..", "models", folder, f"{file}")
+    filename = os.path.join(folder, f"{file}")
 
     # load if exists and should not
     if os.path.exists(filename) and not overwrite:
@@ -455,16 +452,25 @@ def error_compare_models(inp, y_test, proba: bool = True):
     for ii, img in tqdm(enumerate(all_images)):
         # 0) ----- image -----
         ix = np.unravel_index(n_cols * ii, axarr.shape)
-        loaded_img = iio.imread(
-            os.path.join(
-                "..",
-                "data",
-                "Saliency4ASD",
-                "TrainingData",
-                "Images",
-                f"{int(img)}.png",
-            )
-        )
+        up = 1
+        while True:
+            path_up = "."
+            for i in range(up):
+                path_up = os.path.join(path_up, "..")
+
+            path_img = os.path.join(
+                    path_up,
+                    "data",
+                    "Saliency4ASD",
+                    "TrainingData",
+                    "Images",
+                    f"{int(img)}.png",
+                )
+            if os.path.exists(path_img):
+                loaded_img = iio.imread(path_img)
+                break
+            else:
+                up += 1
 
         axarr[ix].imshow(loaded_img)
         axarr[ix].grid(False)
@@ -593,16 +599,26 @@ def error_images(y_test, pred_test, proba_test):
 
         # 0) ----- image -----
         ix = np.unravel_index(n_cols * ii, axarr.shape)
-        loaded_img = iio.imread(
-            os.path.join(
-                "..",
-                "data",
-                "Saliency4ASD",
-                "TrainingData",
-                "Images",
-                f"{int(img)}.png",
-            )
-        )
+
+        up = 1
+        while True:
+            path_up = "."
+            for i in range(up):
+                path_up = os.path.join(path_up, "..")
+
+            path_img = os.path.join(
+                    path_up,
+                    "data",
+                    "Saliency4ASD",
+                    "TrainingData",
+                    "Images",
+                    f"{int(img)}.png",
+                )
+            if os.path.exists(path_img):
+                loaded_img = iio.imread(path_img)
+                break
+            else:
+                up += 1
 
         axarr[ix].imshow(loaded_img)
         axarr[ix].grid(False)
