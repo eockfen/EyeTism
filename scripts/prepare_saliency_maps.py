@@ -13,11 +13,6 @@ import torch
 from scipy.special import logsumexp
 import deepgaze_pytorch
 
-if __name__ != "__main__":
-    from scripts import utils as ut
-else:
-    import utils as ut
-
 
 def deepgaze(path_ref, path_pred, redo: bool = False, disp: bool = False):
     def normalize_log_density(log_density):
@@ -37,7 +32,6 @@ def deepgaze(path_ref, path_pred, redo: bool = False, disp: bool = False):
         img = ax.imshow(t, cmap=plt.cm.viridis)
         levels = [0, 0.25, 0.5, 0.75, 1.0]
         cs = ax.contour(t, levels=levels, colors="black")
-        # plt.clabel(cs)
 
         return img, cs
 
@@ -54,6 +48,13 @@ def deepgaze(path_ref, path_pred, redo: bool = False, disp: bool = False):
     # loop referrence images
     refImages = glob.glob(os.path.join(path_ref, "*.png"))
     for img_file in tqdm(refImages):
+        # image to write
+        itw = os.path.join(path_pred, os.path.basename(img_file))
+
+        # check if already done / or / redo==True
+        if os.path.isfile(itw) and not redo:
+            continue
+
         # load image
         image = iio.imread(img_file)
 
@@ -85,9 +86,7 @@ def deepgaze(path_ref, path_pred, redo: bool = False, disp: bool = False):
         smap *= 254
 
         # write
-        iio.imwrite(
-            os.path.join(path_pred, os.path.basename(img_file)), smap.astype(np.uint8)
-        )
+        iio.imwrite(itw, smap.astype(np.uint8))
 
         # plotting
         if disp:
@@ -106,14 +105,16 @@ def deepgaze(path_ref, path_pred, redo: bool = False, disp: bool = False):
 
 
 def search_SAM_predictions(path_ref, path_pred, redo: bool = False):
-    # check folders
-    if not os.path.exists(path_pred):
-        os.makedirs(path_pred)
-
     # SAM paths + models
     path_SAM = os.path.join(curdir, "..", "data", "SAM_original")
     path_SAMimages = os.path.join(path_SAM, "images")
     mdls = ["sam_resnet", "sam_vgg"]
+
+    # check folders
+    if not os.path.exists(os.path.join(path_pred, mdls[0])):
+        os.makedirs(os.path.join(path_pred, mdls[0]))
+    if not os.path.exists(os.path.join(path_pred, mdls[1])):
+        os.makedirs(os.path.join(path_pred, mdls[1]))
 
     # get files
     refImages = glob.glob(os.path.join(path_ref, "*.png"))
@@ -162,136 +163,6 @@ def search_SAM_predictions(path_ref, path_pred, redo: bool = False):
         return print("... something went wrong searching for SAM saliency maps")
 
 
-def individual_fixation_maps(path_im, sal_mdl=None, redo: bool = False):
-    sal_name = {"dg": "DeepGazeIIE", "sam_resnet": "sam_resnet", "sam_vgg": "sam_vgg"}
-
-    # check params
-    sal_mdl = "dg" if sal_mdl is None else sal_mdl
-
-    # check folders
-    path_f = os.path.join(path_im, "fix")
-    path_d = os.path.join(path_im, "dur")
-    path_s = os.path.join(path_im, "sal" + "_" + sal_mdl)
-    path_3 = os.path.join(path_im, "rgb" + "_" + sal_mdl)
-
-    if not os.path.exists(path_f):
-        os.makedirs(path_f)
-    if not os.path.exists(path_d):
-        os.makedirs(path_d)
-    if not os.path.exists(path_s):
-        os.makedirs(path_s)
-    if not os.path.exists(path_3):
-        os.makedirs(path_3)
-
-    # get files
-    sp_files = ut.get_sp_files(who="ASD")
-
-    # create ftw list
-    ftw_all_f = []
-    ftw_all_d = []
-    ftw_all_s = []
-    ftw_all_3 = []
-
-    # create empty 3d lists
-    ifm_all, idm_all, ism_all = [], [], []
-    ifm_max, idm_max, ism_max = [], [], []
-
-    # loop sp files
-    for sp_file_ASD in tqdm(sp_files):
-
-        # corresponding TD sp_file
-        sp_file_TD = sp_file_ASD.replace("ASD/ASD_", "TD/TD_")
-        sp_file = [sp_file_ASD, sp_file_TD]
-
-        # get size of image
-        img_file = ut.get_img_of_sp(sp_file[0])
-        image_size = iio.imread(img_file).shape[0:2]
-
-        # load SALIENCY PREDICTION map
-        sal_map = ut.load_saliency_map(sp_file[0], sal_name[sal_mdl])
-
-        # create ftw list for these images
-        ftw_img_f = []
-        ftw_img_d = []
-        ftw_img_s = []
-        ftw_img_3 = []
-
-        # instantiate empty images
-        ifm_img = np.zeros(list(image_size) + [0])
-        idm_img = np.zeros(list(image_size) + [0])
-        ism_img = np.zeros(list(image_size) + [0])
-
-        # loop ASD/TD
-        for spf in sp_file:
-            # loop scanpaths - ASD
-            sps = ut.load_scanpath(spf)
-            for sp_i, sp in enumerate(sps):
-                # file to write
-                id = ut.get_sp_id(spf, sp_i)
-                ftw_img_f.append(os.path.join(path_f, f"{id}.jpg"))
-                ftw_img_d.append(os.path.join(path_d, f"{id}.jpg"))
-                ftw_img_s.append(os.path.join(path_s, f"{id}.jpg"))
-                ftw_img_3.append(os.path.join(path_3, f"{id}.jpg"))
-
-                # individual fixation map --------------------
-                ifm = np.zeros(image_size)
-                ifm[(sp["y"].astype(int) - 1, sp["x"].astype(int) - 1)] = 1
-                ndimage.gaussian_filter(ifm, sigma=40, output=ifm)
-                # stack
-                ifm_img = np.dstack((ifm_img, ifm))
-
-                # individual duration map --------------------
-                idm = np.zeros(image_size)
-                idm[(sp["y"].astype(int) - 1, sp["x"].astype(int) - 1)] = sp[
-                    "duration"
-                ].astype(int)
-                ndimage.gaussian_filter(idm, sigma=40, output=idm)
-                # stack
-                idm_img = np.dstack((idm_img, idm))
-
-                # individual saliency map --------------------
-                ism = np.zeros(image_size)
-                ism[(sp["y"].astype(int) - 1, sp["x"].astype(int) - 1)] = sal_map[
-                    (sp["y"].astype(int) - 1, sp["x"].astype(int) - 1)
-                ]
-                ndimage.gaussian_filter(ism, sigma=40, output=ism)
-                # stack
-                ism_img = np.dstack((ism_img, ism))
-
-        # append _img_ to _all_
-        ftw_all_f.append(ftw_img_f)
-        ftw_all_d.append(ftw_img_d)
-        ftw_all_s.append(ftw_img_s)
-        ftw_all_3.append(ftw_img_3)
-        ifm_all.append(ifm_img)
-        idm_all.append(idm_img)
-        ism_all.append(ism_img)
-
-        # append max value of image
-        ifm_max.append(ifm_img.max())
-        idm_max.append(idm_img.max())
-        ism_max.append(ism_img.max())
-
-    print("... now wait for all images to be scaled and written to a jpg...")
-    # loop images
-    for i in range(len(ftw_all_f)):
-        # loop participants within image
-        for p in range(len(ftw_all_f[i])):
-            # get wanted image to write
-            itw_f = ifm_all[i][:, :, p] / max(ifm_max) * 254
-            itw_d = idm_all[i][:, :, p] / max(idm_max) * 254
-            itw_s = ism_all[i][:, :, p] / max(ism_max) * 254
-            itw_3 = np.dstack((itw_f, itw_d, itw_s))
-
-            # write image
-            iio.imwrite(ftw_all_f[i][p], itw_f.astype(np.uint8))
-            iio.imwrite(ftw_all_d[i][p], itw_d.astype(np.uint8))
-            iio.imwrite(ftw_all_s[i][p], itw_s.astype(np.uint8))
-            iio.imwrite(ftw_all_3[i][p], itw_3.astype(np.uint8))
-
-    print("... done creating 'all' maps.")
-
-
 if __name__ == "__main__":
     if len(sys.argv) == 1:
         raise NotImplementedError
@@ -300,9 +171,9 @@ if __name__ == "__main__":
         curdir = os.path.dirname(__file__)
         data = os.path.join(curdir, "..", "data")
         ref_images = os.path.join(data, "Saliency4ASD", "TrainingData", "Images")
-        sal_predictions = os.path.join(curdir, "..", "saliency_predictions")
+        sal_predictions = os.path.join(data, "saliency_predictions")
         sal_pred_deepgaze = os.path.join(sal_predictions, "DeepGazeIIE")
-        im = os.path.join(data, "Saliency4ASD", "TrainingData", "Individual_Maps")
+        im = os.path.join(data, "Individual_Maps")
 
         # check args
         redo = False
@@ -315,14 +186,6 @@ if __name__ == "__main__":
                 # run
                 print(" -> searching for SAM predictions")
                 search_SAM_predictions(ref_images, sal_predictions, redo=redo)
-
-            case "IFM":  # Individual Fixation Maps
-                sal_mdl = None
-                if len(sys.argv) > 3 and "--redo" not in sys.argv[3]:
-                    sal_mdl = sys.argv[3]
-                # run
-                print(" -> creating individual fixation maps")
-                individual_fixation_maps(im, sal_mdl=sal_mdl, redo=redo)
 
             case "DG":  # DeepGaze IIE saliency maps
                 # run

@@ -34,8 +34,8 @@ from scripts import utils as ut
 # saving a model --------------------------------------------------------------
 def save_model(
     m,
-    file: str = "some_model.pickle",
-    folder: str = None,
+    file: str,
+    folder: str,
     overwrite: bool = False,
 ):
     """Saves models into "models" folder. If filename already exists, a number
@@ -47,13 +47,10 @@ def save_model(
         overwrite (bool): flag to indicate if model can be overwritten.
                             Defaults to False.
     """
-    # defaults
-    if folder is None:
-        folder = os.path.join("..", "models")
-    else:
-        folder = os.path.join("..", "models", folder)
-        if not os.path.exists(folder):
-            os.makedirs(folder)
+    # folder
+    folder = os.path.join(folder)
+    if not os.path.exists(folder):
+        os.makedirs(folder)
 
     # path to file & split into filename + extensiopn
     path_file = os.path.join(folder, f"{file}")
@@ -77,7 +74,7 @@ def save_model(
 def fit_or_load(
     mdl, X_train, y_train, file, folder: str = None, overwrite: bool = False
 ):
-    filename = os.path.join("..", "models", folder, f"{file}")
+    filename = os.path.join(folder, f"{file}")
 
     # load if exists and should not
     if os.path.exists(filename) and not overwrite:
@@ -204,7 +201,10 @@ def report(
             plt.title("Confusion Matrix for Train")
             plt.xlabel("Predicted")
             plt.ylabel("Actual")
-            ax[cf - 1].set_box_aspect(1)
+            if nfig == 1:
+                ax.set_box_aspect(1)
+            else:
+                ax[cf - 1].set_box_aspect(1)
             cf += 1
         if y_test_pred is not None:  # test set
             plt.subplot(1, nfig, cf)
@@ -218,24 +218,28 @@ def report(
             plt.title("Confusion Matrix for Test")
             plt.xlabel("Predicted")
             plt.ylabel("Actual")
-            ax[cf - 1].set_box_aspect(1)
+            if nfig == 1:
+                ax.set_box_aspect(1)
+            else:
+                ax[cf - 1].set_box_aspect(1)
             cf += 1
 
     # ROC curve
     if y_train_proba is not None or y_test_proba is not None:
-        ax[cf - 1].set_aspect("equal", "box")
+        axx = ax if nfig == 1 else ax[cf - 1]
+        axx.set_aspect("equal", "box")
 
         if y_train_proba is not None:
-            fpr, tpr, _ = roc_curve(y_train, y_train_pred)
-            auc = round(roc_auc_score(y_train, y_train_pred), 3)
+            fpr, tpr, _ = roc_curve(y_train, y_train_proba[:, 1])
+            auc = round(roc_auc_score(y_train, y_train_proba[:, 1]), 3)
             RocCurveDisplay(fpr=fpr, tpr=tpr, roc_auc=auc, estimator_name="Train").plot(
-                ax[cf - 1]
+                axx
             )
         if y_test_proba is not None:
-            fpr, tpr, _ = roc_curve(y_test, y_test_pred)
-            auc = round(roc_auc_score(y_test, y_test_pred), 3)
+            fpr, tpr, _ = roc_curve(y_test, y_test_proba[:, 1])
+            auc = round(roc_auc_score(y_test, y_test_proba[:, 1]), 3)
             RocCurveDisplay(fpr=fpr, tpr=tpr, roc_auc=auc, estimator_name="Test").plot(
-                ax[cf - 1]
+                axx
             )
 
     plt.tight_layout()
@@ -448,16 +452,25 @@ def error_compare_models(inp, y_test, proba: bool = True):
     for ii, img in tqdm(enumerate(all_images)):
         # 0) ----- image -----
         ix = np.unravel_index(n_cols * ii, axarr.shape)
-        loaded_img = iio.imread(
-            os.path.join(
-                "..",
-                "data",
-                "Saliency4ASD",
-                "TrainingData",
-                "Images",
-                f"{int(img)}.png",
-            )
-        )
+        up = 1
+        while True:
+            path_up = "."
+            for i in range(up):
+                path_up = os.path.join(path_up, "..")
+
+            path_img = os.path.join(
+                    path_up,
+                    "data",
+                    "Saliency4ASD",
+                    "TrainingData",
+                    "Images",
+                    f"{int(img)}.png",
+                )
+            if os.path.exists(path_img):
+                loaded_img = iio.imread(path_img)
+                break
+            else:
+                up += 1
 
         axarr[ix].imshow(loaded_img)
         axarr[ix].grid(False)
@@ -586,16 +599,26 @@ def error_images(y_test, pred_test, proba_test):
 
         # 0) ----- image -----
         ix = np.unravel_index(n_cols * ii, axarr.shape)
-        loaded_img = iio.imread(
-            os.path.join(
-                "..",
-                "data",
-                "Saliency4ASD",
-                "TrainingData",
-                "Images",
-                f"{int(img)}.png",
-            )
-        )
+
+        up = 1
+        while True:
+            path_up = "."
+            for i in range(up):
+                path_up = os.path.join(path_up, "..")
+
+            path_img = os.path.join(
+                    path_up,
+                    "data",
+                    "Saliency4ASD",
+                    "TrainingData",
+                    "Images",
+                    f"{int(img)}.png",
+                )
+            if os.path.exists(path_img):
+                loaded_img = iio.imread(path_img)
+                break
+            else:
+                up += 1
 
         axarr[ix].imshow(loaded_img)
         axarr[ix].grid(False)
