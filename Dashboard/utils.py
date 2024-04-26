@@ -35,7 +35,7 @@ def init_vars():
         },
     }
 
-    DB = pd.read_csv(os.path.join("files", "patients.csv"))
+    DB = pd.read_csv(os.path.join("db", "patients.csv"))
     if "patient_db" not in st.session_state:
         st.session_state.pat_db = DB
     if "edited_patient_db" not in st.session_state:

@@ -9,10 +9,7 @@ import imageio.v3 as iio
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 
-import functions as fct
-import scripts.calc_features as feat
-
-# import utils as ut
+import features as feat
 
 
 # -----------------------------------------------------------------------------
@@ -46,7 +43,7 @@ def add_pat(name, age):
         )
 
     # save updated DB
-    st.session_state.pat_db.to_csv(os.path.join("files", "patients.csv"), index=False)
+    st.session_state.pat_db.to_csv(os.path.join("db", "patients.csv"), index=False)
 
     st.session_state.patient_list = [
         f"{int(r['id'])}: {r['name']} (age: {int(r['age'])})"
@@ -58,7 +55,7 @@ def add_pat(name, age):
 def update_pat_DB():
     print(st.session_state.pat_db_update)
     # st.session_state.pat_db = st.session_state.pat_db_update
-    # st.session_state.pat_db.to_csv(os.path.join("files", "patients.csv"), index=False)
+    # st.session_state.pat_db.to_csv(os.path.join("db", "patients.csv"), index=False)
 
     return True
 
@@ -68,7 +65,7 @@ def del_patient(x):
     del_id = int(x.split(":")[0])
     del_idx = st.session_state.pat_db.id == del_id
     st.session_state.pat_db = st.session_state.pat_db.loc[np.invert(del_idx), :]
-    st.session_state.pat_db.to_csv(os.path.join("files", "patients.csv"), index=False)
+    st.session_state.pat_db.to_csv(os.path.join("db", "patients.csv"), index=False)
 
     if st.session_state.debug:
         print(" id to delete: " + str(del_id))
@@ -163,7 +160,7 @@ def update_rec_DB():
             tmp.loc[tmp["id"] == id, "last_rec"] = "---"
 
     # save updated DB
-    tmp.to_csv(os.path.join("files", "patients.csv"), index=False)
+    tmp.to_csv(os.path.join("db", "patients.csv"), index=False)
 
 
 # -----------------------------------------------------------------------------
@@ -262,7 +259,7 @@ def save_scanpath_figs():
         os.makedirs(path_evaluation)
 
     # loop images
-    sps = fct.load_scanpath(csv_file)
+    sps = load_scanpath(csv_file)
     for sp in sps:
         # img
         img_nr = sp["img"].iloc[0]
