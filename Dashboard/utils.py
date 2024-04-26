@@ -103,12 +103,11 @@ def init_vars():
 # ------------------------------------------
 def create_menu():
     # sidebar menu
-    st.sidebar.image("images/Logo_wide.png", width=200, use_column_width="never")
+    st.sidebar.image("content/Logo_wide.png", width=200, use_column_width="never")
     st.sidebar.page_link("app.py", label="Capstone Project")
     st.sidebar.page_link("pages/about_ASD.py", label="About ASD")
     st.sidebar.page_link("pages/dataset_features.py", label="Dataset & Features")
     st.sidebar.page_link("pages/models.py", label="Models")
-    # st.sidebar.page_link("pages/about_ET.py", label="About 'EyeTism'")
     st.sidebar.page_link("pages/about_us.py", label="About Us")
     st.sidebar.markdown("---")
     st.sidebar.markdown("# Diagnostics")
@@ -117,7 +116,7 @@ def create_menu():
     st.sidebar.page_link("pages/evaluate.py", label="Evaluate")
     st.sidebar.markdown("---")
     ut.h_spacer(7, sb=True)
-    # st.session_state.debug = st.sidebar.checkbox(label="show debug info", value=False)
+    st.session_state.debug = st.sidebar.checkbox(label="show debug info", value=False)
 
 
 # ------------------------------------------

@@ -1,5 +1,6 @@
 import streamlit as st
 import utils as ut
+import os
 import functions as fct
 
 # setup vars, menu, style, and so on --------------------
@@ -47,9 +48,9 @@ st.radio(
 
 # load video -----
 if st.session_state.record_example == "ASD":
-    video_file = open("videos/asd.mp4", "rb")
+    video_file = open(os.path.join("content", "videos", "asd.mp4"), "rb")
 else:
-    video_file = open("videos/td.mp4", "rb")
+    video_file = open(os.path.join("content", "videos", "td.mp4"), "rb")
 
 # play the video -----
 video_bytes = video_file.read()

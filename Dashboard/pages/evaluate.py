@@ -120,9 +120,9 @@ if go_analyse:
         )
         for i, img in enumerate(st.session_state.opt["images"]):
             # files
-            file_img = os.path.join("images", "stimuli", f"{img}.png")
+            file_img = os.path.join("content", "stimuli", f"{img}.png")
             file_img_sal = os.path.join(
-                "images", "sal_pred", "DeepGazeIIE", f"{img}.png"
+                "content", "sal_pred", "DeepGazeIIE", f"{img}.png"
             )
             file_img_td_hm = os.path.join(
                 "..",

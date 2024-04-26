@@ -202,11 +202,15 @@ def clean_features(df):
 
 def load_classifiers():
     clf = {
-        "RF": pickle.load(open(os.path.join("models", "RF.pickle"), "rb")),
-        "XGB": pickle.load(open(os.path.join("models", "XGB.pickle"), "rb")),
-        "SVC": pickle.load(open(os.path.join("models", "SVC.pickle"), "rb")),
-        "NB_s": pickle.load(open(os.path.join("models", "NB_s.pickle"), "rb")),
-        "KNN_s": pickle.load(open(os.path.join("models", "KNN_s.pickle"), "rb")),
+        "RF": pickle.load(open(os.path.join("models", "RF_calib.pickle"), "rb")),
+        "SVC": pickle.load(open(os.path.join("models", "SVC_calib.pickle"), "rb")),
+        "XGB": pickle.load(open(os.path.join("models", "XGB_calib.pickle"), "rb")),
+        "KNN_s": pickle.load(
+            open(os.path.join("models", "stacking_KNN_calib.pickle"), "rb")
+        ),
+        "NB_s": pickle.load(
+            open(os.path.join("models", "stacking_NB_calib.pickle"), "rb")
+        ),
     }
     return clf
 
@@ -240,8 +244,12 @@ def hard_vote(pred):
 
 def save_scanpath_figs():
     # load precalculated faces & objects
-    detected_faces = pickle.load(open(os.path.join("models", "faces.pickle"), "rb"))
-    detected_objects = pickle.load(open(os.path.join("models", "objects.pickle"), "rb"))
+    detected_faces = pickle.load(
+        open(os.path.join("models", "objects_faces", "faces.pickle"), "rb")
+    )
+    detected_objects = pickle.load(
+        open(os.path.join("models", "objects_faces", "objects.pickle"), "rb")
+    )
 
     # filename
     id = st.session_state.eval_pat.split(":")[0]
@@ -260,7 +268,7 @@ def save_scanpath_figs():
         img_nr = sp["img"].iloc[0]
 
         # load image
-        img = iio.imread(os.path.join("images", "stimuli", f"{img_nr}.png"))
+        img = iio.imread(os.path.join("content", "images", f"{img_nr}.png"))
         plt.figure(
             figsize=(round(img.shape[1] * 0.02), round(img.shape[0] * 0.02)),
             frameon=False,
