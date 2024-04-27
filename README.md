@@ -3,11 +3,11 @@
 ----
 ![alt text](Logo_Eyetism_4.png)
 
-This repository contains the work of the Capstone project "EyeTism - Eye Movement Based Autism Diagnostics", developed within the intensive programm in Data Science provided by Neuefische GmbH. 
+This repository contains the work of the Capstone project "EyeTism - Eye Movement Based Autism Diagnostics", developed within the intensive programm in Data Science provided by [neuefische GmbH](https://neuefische. de). 
 
 # Description
 
-"EyeTism" project focussed on the development of a tool for diagnosis of Autism Spectrum Disorder (ASD) in children within the age range of 8 - 15 years old. ASD is a developmental disability with effects on social interaction and learning. Hence, early diagnosis of affected children is crucial for child development. Although individuals with ASD often exhibit distinct gaze behavior compared to typically developing (TD), ASD detection still remains challenging. Our tool employs machine learning on eye tracking data from high-functioning ASD and TD children to build an integrative tool for pediatricians responsible for diagnosing ASD based on visual attention patterns of patients on a selected subset of images. 
+Our "EyeTism" project focussed on the development of a tool for diagnosis of Autism Spectrum Disorder (ASD) in children within the age range of 8 - 15 years old. ASD is a developmental disability with effects on social interaction and learning. Hence, early diagnosis of affected children is crucial for child development. Although individuals with ASD often exhibit distinct gaze behavior compared to typically developing (TD), ASD detection still remains challenging. Our tool employs machine learning on eye tracking data from high-functioning ASD and TD children to build an integrative tool for pediatricians responsible for diagnosing ASD based on visual attention patterns of patients on a selected subset of images. 
 
 # Data source
 
@@ -22,9 +22,8 @@ Gaze behaviors of 14 patients with ASD and 14 TD were analyzed when exposed to d
 
 ###### Reference dataset: H. Duan, G. Zhai, X. Min, Z. Che, Y. Fang, X. Yang, J. Gutiérrez, P. Le Callet, “A Dataset of Eye Movements for the Children with Autism Spectrum Disorder”, ACM Multimedia Systems Conference (MMSys’19), Jun. 2019
 
+# Roadmap - from data to final models
 
-# Roadmap - from data to model 
-----
 ![alt text](image.png)
 
 ## 1. Installation and setting
