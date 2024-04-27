@@ -1,9 +1,9 @@
 # EyeTism - Eye Movement Based Autism Diagnostics
-##### Authors: Adam Zabicki, Dennis Dombrovskij, Elena Ockfen, Mariano Santoro, Stefan Schlögl
+##### Authors: Elena Ockfen, Dennis Dombrovskij, Mariano Santoro, Stefan Schlögl, Adam Zabicki
 ----
-![alt text](Logo_Eyetism_4.png)
+![eyetism_logo](Logo_Eyetism_4.png)
 
-This repository contains the work of the Capstone project "EyeTism - Eye Movement Based Autism Diagnostics", developed within the intensive programm in Data Science provided by [neuefische GmbH](https://neuefische. de). 
+This repository contains the work of the Capstone project "EyeTism - Eye Movement Based Autism Diagnostics", developed within the intensive _Data Science Bootcamp_ provided by [neuefische GmbH](https://neuefische.de). 
 
 # Description
 
@@ -20,24 +20,30 @@ Gaze behaviors of 14 patients with ASD and 14 TD were analyzed when exposed to d
   - 32 with a single person
   - 43 with a single person and objects in one image
 
-###### Reference dataset: H. Duan, G. Zhai, X. Min, Z. Che, Y. Fang, X. Yang, J. Gutiérrez, P. Le Callet, “A Dataset of Eye Movements for the Children with Autism Spectrum Disorder”, ACM Multimedia Systems Conference (MMSys’19), Jun. 2019
+> _Reference dataset: H. Duan, G. Zhai, X. Min, Z. Che, Y. Fang, X. Yang, J. Gutiérrez, P. Le Callet, “A Dataset of Eye Movements for the Children with Autism Spectrum Disorder”, ACM Multimedia Systems Conference (MMSys’19), Jun. 2019_
 
 # Roadmap - from data to final models
 
-![alt text](image.png)
+![workflow](image.png)
 
-## 1. Installation and setting
-----
+### 0. clone this repo
+
+```terminal
+git clone xxx
+cd EyeTism
+```
+
+### 1. Python Environment 
 
 - Open the terminal
 
-- Install the conda environment
+- Depending on how you manage your virtual environments, either install it via _conda_
 
 ```terminal
 conda env create -f environment.yml
-````
+```
 
-- Install the python environment 
+- or via _venv_
 
 ```terminal
 pyenv local 3.11.3
@@ -47,33 +53,34 @@ pip install --upgrade pip
 pip install -r requirements.txt 
 ```
 
-## 2. Extract data from .zip files
-----
+### 2. Extract data from .zip files
+
 - Download the following .zip archives and store them in the `/source` folder:
    - [Saliency4ASD Dataset](https://github.com/eockfen/EyeTism/releases/download/v0.1.0/Saliency4ASD.zip)
    - [Saliency Predictions](https://github.com/eockfen/EyeTism/releases/download/v0.1.0/saliency_predictions.zip)
    - [SAM original](https://github.com/eockfen/EyeTism/releases/download/v0.1.0/SAM_original.zip)
 
-- Run python script in scripts folder:
+- Run python script in `/scripts` folder:
 
 ``` terminal
 cd ./scripts
 python unzip_data.py
 ```
 
-- Get the fully extracted `Saliency4ASD` dataset and the saliency predictions of the 300 images for three different visual attentive models: `DeepGazeIIE`, `SAM_ResNET`, and `SAM_VGG`.
+- This will extract full `Saliency4ASD` dataset, as well as the saliency predictions of the 300 images for three different visual attentive models: `DeepGazeIIE` [link](link), `SAM_ResNET` [link](link), and `SAM_VGG` [link](link).
 
-### Re-do saliency predictions 
-----
-- Saliency predictions of the SAM model were downloaded (link of the repository here)
+**_Re-do saliency predictions_**
 
-- Saliency predicted maps had different names than the images in the Saliency4ASD dataset, therefore the following steps were performed:
+- The extracted zip files contain the already generated saliency maps predicted by DEEPGAZEIIE and SAM, but your are able to reproduce our steps we did to obtain these maps.
+
+- Originally downloaded saliency prediction maps of the _SAM_ model had different names as the images in the _Saliency4ASD_ dataset, therefore the following steps were performed:
 
     - Matching differently named files to the salency4asd files 
     - Renaming / copying the saliency predicted maps
-    - DeepGazeIIE predictions were done by implementing their actual model
 
-- Calculation and sorting of the saliency prediction images was re-done by running the following code:
+- DeepGazeIIE predictions were done by implementing their actual model. 
+
+- To re-do these steps, run the following code:
 
 ``` terminal
 cd ./scripts
@@ -82,33 +89,34 @@ python prepare_saliency_maps.py sam
 python prepare_saliency_maps.py dg
 ```
 
-### 3. Extract all features
-----
+#### 3. Extract all features
+
 - Check out and run the `extract_features.iypnb` notebook in the `/notebooks` folder.
 
-- Extracted features will be saved in `/data/df_deep_sam.csv` file. This process can approximately take two hours
+- Extracted features will be saved in `/data/df_deep_sam.csv` file. This process can approximately take two hours.
 
 After running the notebook, three outputs are generated:
 
-1. all individual scanpaths are overlayed onto the stimuli images
+1. all individual scanpaths are overlayed onto the stimuli images. 
 
-2. all detected objects (whose probability scores will be saved in a `.txt` file) and faces are overlayed onto the stimuli images
+2. all detected objects (whose probability scores will be saved in a `.txt` file) and faces are overlayed onto the stimuli images. 
 
-3. individual scanpaths, detected objects and faces are overlayed onto the stimuli images
+3. individual scanpaths, detected objects and faces are overlayed onto the stimuli images. 
 
 - Outputs will be saved in `/data/obj_detection` folder and in the `/data/individual_scanpaths` folder, respectively 
 
 
 ### 4. Exploratory Data Analysis
-----
+
+_will be provided_
 
 ### 5. Baseline model
-----
-Check out the notebook `baseline.iypnb` in the `/notebooks` folder to run the baseline model 
+
+Check out the notebook `baseline.iypnb` in the `/notebooks` folder to run the baseline model. 
 
 ### 6. Classifiers construction 
-----
-The final models were obtained after evaluating the 30-image-test-set by defining the best model-image-pairs, as detailed in the notebooks in the `/modeling` folder
+
+The final models were selected after evaluating the 30-image-test-set by defining the best model-image-pairs, as detailed in the notebooks in the `/modeling` folder
 
 The results were generated as reported:
 
@@ -161,7 +169,7 @@ The 8 models developed are then evaluated on our 30-image-test-set as reported i
 
 `/modeling`
 - In this folder you will find: 
-    - the subfolder `/modeling/dev` where several models were developed, trained and tested
+    - the subfolder `/dev` where several models were developed, trained and tested
     - the notebooks generated for the 8 developed models, for the pipelines to realize voting and stacking classifiers and for the final evaluation of the models `FINAL_EVALUATION.ipynb`
 
 `/models`
