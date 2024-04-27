@@ -1,112 +1,194 @@
-# ds-modeling-pipeline
+# EyeTism - Eye Movement Based Autism Diagnostics
+##### Authors: Adam Zabicki, Dennis Dombrovskij, Elena Ockfen, Mariano Santoro, Stefan Schlögl
+----
+![alt text](Logo_Eyetism_4.png)
 
-Here you find a Skeleton project for building a simple model in a python script or notebook and log the results on MLFlow.
+This repository contains the work of the Capstone project "EyeTism - Eye Movement Based Autism Diagnostics", developed within the intensive programm in Data Science provided by Neuefische GmbH. 
 
-There are two ways to do it: 
-* In Jupyter Notebooks:
-    We train a simple model in the [jupyter notebook](notebooks/nf/EDA-and-modeling.ipynb), where we select only some features and do minimal cleaning. The hyperparameters of feature engineering and modeling will be logged with MLflow
+# Description
 
-* With Python scripts:
-    The [main script](modeling/nf/train.py) will go through exactly the same process as the jupyter notebook and also log the hyperparameters with MLflow
+"EyeTism" project focussed on the development of a tool for diagnosis of Autism Spectrum Disorder (ASD) in children within the age range of 8 - 15 years old. ASD is a developmental disability with effects on social interaction and learning. Hence, early diagnosis of affected children is crucial for child development. Although individuals with ASD often exhibit distinct gaze behavior compared to typically developing (TD), ASD detection still remains challenging. Our tool employs machine learning on eye tracking data from high-functioning ASD and TD children to build an integrative tool for pediatricians responsible for diagnosing ASD based on visual attention patterns of patients on a selected subset of images. 
 
-Data used is the [coffee quality dataset](https://github.com/jldbc/coffee-quality-database).
+# Data source
 
-## Requirements:
+Gaze behaviors of 14 patients with ASD and 14 TD were analyzed when exposed to diverse visual stimuli. 300 images composed the Saliency4ASD dataset (https://saliency4asd.ls2n.fr/datasets/) featuring diverse scenes:
+  - 40 images featuring animals
+  - 88 with buildings or objects
+  - 20 depicting natural scenes
+  - 36 portraying multiple people in one image
+  - 41 displaying multiple people and objects in one image
+  - 32 with a single person
+  - 43 with a single person and objects in one image
 
-- pyenv with Python: 3.11.3
+###### Reference dataset: H. Duan, G. Zhai, X. Min, Z. Che, Y. Fang, X. Yang, J. Gutiérrez, P. Le Callet, “A Dataset of Eye Movements for the Children with Autism Spectrum Disorder”, ACM Multimedia Systems Conference (MMSys’19), Jun. 2019
 
-### Setup
 
-Use the requirements file in this repo to create a new environment.
+# Roadmap - from data to model 
+----
+![alt text](image.png)
 
-```BASH
-make setup
+## 1. Installation and setting
+----
 
-#or
+- Open the terminal
 
+- Install the conda environment
+
+```terminal
+conda env create -f environment.yml
+````
+
+- Install the python environment 
+
+```terminal
 pyenv local 3.11.3
 python -m venv .venv
 source .venv/bin/activate
 pip install --upgrade pip
-pip install -r requirements_dev.txt
+pip install -r requirements.txt 
 ```
 
-The `requirements.txt` file contains the libraries needed for deployment.. of model or dashboard .. thus no jupyter or other libs used during development.
+## 2. Extract data from .zip files
+----
+- Download the following .zip archives and store them in the `/source` folder:
+   - [Saliency4ASD Dataset](https://github.com/eockfen/EyeTism/releases/download/v0.1.0/Saliency4ASD.zip)
+   - [Saliency Predictions](https://github.com/eockfen/EyeTism/releases/download/v0.1.0/saliency_predictions.zip)
+   - [SAM original](https://github.com/eockfen/EyeTism/releases/download/v0.1.0/SAM_original.zip)
 
-The MLFLOW URI should **not be stored on git**, you have two options, to save it locally in the `.mlflow_uri` file:
+- Run python script in scripts folder:
 
-```BASH
-echo http://127.0.0.1:5000/ > .mlflow_uri
+``` terminal
+cd ./scripts
+python unzip_data.py
 ```
 
-This will create a local file where the uri is stored which will not be added on github (`.mlflow_uri` is in the `.gitignore` file). Alternatively you can export it as an environment variable with
+- Get the fully extracted `Saliency4ASD` dataset and the saliency predictions of the 300 images for three different visual attentive models: `DeepGazeIIE`, `SAM_ResNET`, and `SAM_VGG`.
 
-```bash
-export MLFLOW_URI=http://127.0.0.1:5000/
+### Re-do saliency predictions 
+----
+- Saliency predictions of the SAM model were downloaded (link of the repository here)
+
+- Saliency predicted maps had different names than the images in the Saliency4ASD dataset, therefore the following steps were performed:
+
+    - Matching differently named files to the salency4asd files 
+    - Renaming / copying the saliency predicted maps
+    - DeepGazeIIE predictions were done by implementing their actual model
+
+- Calculation and sorting of the saliency prediction images was re-done by running the following code:
+
+``` terminal
+cd ./scripts
+python unzip_data.py sam
+python prepare_saliency_maps.py sam
+python prepare_saliency_maps.py dg
 ```
 
-This links to your local mlflow, if you want to use a different one, then change the set uri.
+### 3. Extract all features
+----
+- Check out and run the `extract_features.iypnb` notebook in the `/notebooks` folder.
 
-The code in the [config.py](modeling/nf/config.py) will try to read it locally and if the file doesn't exist will look in the env var.. IF that is not set the URI will be empty in your code.
+- Extracted features will be saved in `/data/df_deep_sam.csv` file. This process can approximately take two hours
 
-## Usage
+After running the notebook, three outputs are generated:
 
-### Creating an MLFlow experiment
+1. all individual scanpaths are overlayed onto the stimuli images
 
-You can do it via the GUI or via [command line](https://www.mlflow.org/docs/latest/tracking.html#managing-experiments-and-runs-with-the-tracking-service-api) if you use the local mlflow:
+2. all detected objects (whose probability scores will be saved in a `.txt` file) and faces are overlayed onto the stimuli images
 
-```bash
-mlflow experiments create --experiment-name 0-template-ds-modeling
-```
+3. individual scanpaths, detected objects and faces are overlayed onto the stimuli images
 
-Check your local mlflow
+- Outputs will be saved in `/data/obj_detection` folder and in the `/data/individual_scanpaths` folder, respectively 
 
-```bash
-mlflow ui
-```
 
-and open the link [http://127.0.0.1:5000](http://127.0.0.1:5000)
+### 4. Exploratory Data Analysis
+----
 
-This will throw an error if the experiment already exists. **Save the experiment name in the [config file](modeling/nf/config.py).**
+### 5. Baseline model
+----
+Check out the notebook `baseline.iypnb` in the `/notebooks` folder to run the baseline model 
 
-In order to train the model and store test data in the data folder and the model in models run:
+### 6. Classifiers construction 
+----
+The final models were obtained after evaluating the 30-image-test-set by defining the best model-image-pairs, as detailed in the notebooks in the `/modeling` folder
 
-```bash
-#activate env
-source .venv/bin/activate
+The results were generated as reported:
 
-python -m modeling.nf.train
-```
+1. In notebook `create_basemodel_pipelines.ipynb`
+    - all models use a different set of features, therefore pipelines are built to generate stacking and voting classifiers
+    - this results in uncalibrated basemodels of `RF`, `XGBoost` and `SVC`, which are saved in `/models/uncalibrated_pipelines/<MODEL>_uncalib.pickle`
+  
+2. In notebook `calib_RF_XGB_SVC_threshold.ipynb`
+    - models mentioned in 1. are calibrated
+    - _threshold_ analysis is performed to find the optimal decision thresholds for each model in order to maximize f1 score 
+    - calibrated models are saved in `/models/calibrated/<MODEL>_calib.pickle`
 
-In order to test that predict works on a test set you created run:
+3. In notebook `voting_RF_XGB_SVC_threshold.ipynb`
+    - voting classifier is built on top of the previous calibrated models (`RF`, `XGBoost` and `SVC`)
+    - voting model is saved in `/models/calibrated/VTG_calib.pickle`
 
-```bash
-python modeling/nf/predict.py models/linear data/X_test.csv data/y_test.csv
-```
+4. In notebook `stacking_<MODEL>_calib.ipynb`
+    - stacking classifiers are built for 4 different _final estimators_ 
+      - Logistic regression (LR)
+      - K-nearest neighbors (KNN)
+      - Light gradient boosting machine (LGBM)
+      - Naive Bayes (NB)
+    - base estimators are the calibrated basemodels `RF`, `XGBoost` and `SVC`
+    - stacking models are saved in `/models/calibrated/stacking_<MODEL>_calib.pickle`
 
-## About MLFLOW -- delete this when using the template
+5. In notebook `stacking_thresholding.ipynb`
+   - _Threshold_ analysis is performed for the four stacking models
 
-MLFlow is a tool for tracking ML experiments. You can run it locally or remotely. It stores all the information about experiments in a database.
-And you can see the overview via the GUI or access it via APIs. Sending data to mlflow is done via APIs. And with mlflow you can also store models on S3 where you version them and tag them as production for serving them in production.
-![mlflow workflow](images/nf/0_general_tracking_mlflow.png)
 
-### MLFlow GUI
+## 7. Final evaluation on 30 test images
 
-You can group model trainings in experiments. The granularity of what an experiment is up to your usecase. Recommended is to have an experiment per data product, as for all the runs in an experiment you can compare the results.
-![gui](images/nf/1_gui.png)
+The 8 models developed are then evaluated on our 30-image-test-set as reported in the notebook `FINAL_EVALUATION.ipynb`
 
-### Code to send data to MLFlow
 
-In order to send data about your model you need to set the connection information, via the tracking uri and also the experiment name (otherwise the default one is used). One run represents a model, and all the rest is metadata. For example if you want to save train MSE, test MSE and validation MSE you need to name them as 3 different metrics.
-If you are doing CV you can set the tracking as nested.
-![mlflow code](images/nf/2_code.png)
+## `main/` navigator  
+---
 
-### MLFlow metadata
+`/CNN`
+  - This folder contains the work done for the CNN modelling part (not integrated in the workflow)
+  - `README.md` can navigate you through its content
 
-There is no constraint between runs to have the same metadata tracked. I.e. for one run you can track different tags, different metrics, and different parameters (in cv some parameters might not exist for some runs so this .. makes sense to be flexible).
+`/Dashboard`
+- This folder contains...
 
-- tags can be anything you want.. like if you do CV you might want to tag the best model as "best"
-- params are perfect for hypermeters and also for information about the data pipeline you use, if you scaling vs normalization and so on
-- metrics.. should be numeric values as these can get plotted
+`/images`
+- In this folder you will find:
+    - final set.png contains the final set of images 
+    - test_set.png contains set of images used for generating the predictions of the models
+    - val_set.png
 
-![mlflow metadata](images/nf/3_metadata.png)
+`/modeling`
+- In this folder you will find: 
+    - the subfolder `/modeling/dev` where several models were developed, trained and tested
+    - the notebooks generated for the 8 developed models, for the pipelines to realize voting and stacking classifiers and for the final evaluation of the models `FINAL_EVALUATION.ipynb`
+
+`/models`
+- In this folder you find the subfolders:
+    - `/calibrated` contains the calibrated models as `pickle`files
+    - `/dev`contains subfolders with all the models generated during the development, finetuning and optimization phase as `pickle`files
+    - `/mediapipe` contains mediapipe models
+    - `/uncalibrated_pipelines` contains uncalibrated models as `pickle`files
+
+`/notebooks`
+- In this folder you find two notebooks generated for the baseline modelling part and the extraction of the features
+
+`/scripts`
+- This folder contains...
+      
+
+
+## Dashboard
+----
+
+Find here the link our tool: 
+
+## Presentation
+----
+
+Find here the presentation done at the graduation event of the Neuefische Data Science bootcamp ([EyeTism presentation](EyeTism_presentation.pdf)))
+
+## Acknowledgements
+All authors express their profound gratitude to the coaches and the organization of **Neuefische GmbH**
