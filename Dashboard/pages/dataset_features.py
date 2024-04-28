@@ -94,7 +94,7 @@ with col_ASD:
     # Display the selected image
     st.image(img, width=int(287 * w / h))
 
-# scanpaths -------------------------------------
+# region scanpaths -------------------------------------
 ut.h_spacer(1)
 st.markdown("### Scanpaths")
 st.write(
@@ -201,7 +201,7 @@ with st.container(border=True):
             # plot
             st.pyplot(fig_asd)
 
-# heatmaps --------------------------------------
+# region heatmaps --------------------------------------
 ut.h_spacer(1)
 st.markdown("### Visual Heatmaps")
 st.write(
@@ -216,15 +216,15 @@ with st.container(border=True):
     col_TD, col_ASD = st.columns(2)
     with col_TD:
         st.markdown("#### TD")
-        fig_hm_td = ip.create_heatmap(int(show_image.split(".")[0]))
-        st.pyplot(fig_hm_td)
+        fig_hm_td = ip.create_heatmap(int(show_image.split(".")[0]), 'TD')
+        st.image(fig_hm_td, channels="BGR")
 
     with col_ASD:
         st.markdown("#### ASD")
-        fig_hm_asd = ip.create_heatmap(int(show_image.split(".")[0]))
-        st.pyplot(fig_hm_asd)
+        fig_hm_asd = ip.create_heatmap(int(show_image.split(".")[0]), 'ASD')
+        st.image(fig_hm_asd, channels="BGR")
 
-# saliency --------------------------------------
+# region saliency --------------------------------------
 ut.h_spacer(1)
 st.markdown("### Saliency Predictions")
 st.write(
@@ -254,7 +254,7 @@ with st.container(border=True):
         st.markdown("#### SAM ResNET")
         st.image(os.path.join(path_sal_sam_resnet, show_image[:-4] + ".jpg"))
 
-# objects & faces -------------------------------
+# region objects & faces -------------------------------
 ut.h_spacer(1)
 st.markdown("### Object and Face Recognition")
 st.write(

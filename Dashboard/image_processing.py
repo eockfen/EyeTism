@@ -1,8 +1,11 @@
 import os
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
-import imageio.v3 as iio
+from scipy import ndimage
+from skimage import exposure
+import cv2
 
 
 def overlay_scanpath(fig, sp):
@@ -87,19 +90,36 @@ def overlay_objects(fig, objects, lw: int = 2, lbl: bool = True):
     return fig
 
 
-def create_heatmap(img):
-    file_img_td_hm = os.path.join(
+def create_heatmap(img_nr, who):
+    # image --------------------
+    file_img = os.path.join(
         "content",
         "images",
-        f"{img}.png",
+        f"{img_nr}.png",
     )
-    img = iio.imread(file_img_td_hm)
-    fig = plt.figure(
-        figsize=(round(img.shape[1] * 0.02), round(img.shape[0] * 0.02)),
-        frameon=False,
-    )
-    ax = plt.gca()
-    ax.set_axis_off()
-    ax.imshow(img)
+    img = cv2.imread(file_img)
+    image_size = img.shape[0:2]
 
-    return fig
+    # scanpaths --------------------
+    file_sp = os.path.join(
+        "content",
+        "scanpaths",
+        f"{who}_{img_nr}.txt",
+    )
+    sp = pd.read_csv(file_sp, index_col=None)
+    sp.columns = map(str.strip, sp.columns)
+    sp.columns = map(str.lower, sp.columns)
+
+    # individual fixation map --------------------
+    fix_map = np.zeros(image_size)
+    fix_map[(sp["y"].astype(int) - 1, sp["x"].astype(int) - 1)] = 1
+    ndimage.gaussian_filter(fix_map, sigma=40, output=fix_map)
+
+    map_img = exposure.rescale_intensity(fix_map, out_range=(0, 255))
+    map_img = np.uint8(map_img)
+    heatmap_img = cv2.applyColorMap(map_img, cv2.COLORMAP_JET)
+
+    # merge map and frame
+    hm_overlay = cv2.addWeighted(heatmap_img, 0.65, img, 0.5, 0)
+
+    return hm_overlay
