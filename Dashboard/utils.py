@@ -4,6 +4,7 @@ import glob
 import os
 import datetime
 import utils as ut
+import pickle
 
 
 # initialize session_state variabled ------------------------------------------
@@ -90,6 +91,7 @@ def init_vars():
             253: {"mdl": "XGB", "name": "XGBoost"},
             287: {"mdl": "SVC", "name": "Support Vector Classifier"},
         }
+
     if "mdl_thresh" not in st.session_state:
         st.session_state.mdl_thresh = {
             "RF": 0.38,
@@ -98,6 +100,18 @@ def init_vars():
             "KNN_s": 0.44,
             "NB_s": 0.16,
         }
+
+    if "loaded_faces" not in st.session_state:
+        print('load face')
+        st.session_state.loaded_faces = pickle.load(
+           open(os.path.join("models", "objects_faces", "faces.pickle"), "rb")
+        )
+
+    if "loaded_objects" not in st.session_state:
+        print('load objects')
+        st.session_state.loaded_objects = pickle.load(
+           open(os.path.join("models", "objects_faces", "objects.pickle"), "rb")
+        )
 
 
 # ------------------------------------------

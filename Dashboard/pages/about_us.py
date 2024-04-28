@@ -8,7 +8,7 @@ ut.default_style()
 ut.create_menu()
 
 # vars
-pic_width = 175
+pic_width = 250
 space = 2
 
 # page -------------------
@@ -18,12 +18,14 @@ st.markdown("---")
 st.subheader("Elena Ockfen")
 c_left, c_right = st.columns([1, 3])
 with c_left:
-    st.image(image="content/us/EO.png", width=pic_width)
+    st.image(image="content/us/EO.jpg", width=pic_width)
 with c_right:
     st.markdown(
         """**Background:** Biologist (Immune-Oncology)
 
-**Github:** [eockfen](https://github.com/eockfen)"""
+**Github:** [eockfen](https://github.com/eockfen)
+
+**LinkedIn:** [E. Ockfen](https://www.linkedin.com/in/elena-ockfen-1a41251a2/)"""
     )
 
 ut.h_spacer(space)
@@ -51,7 +53,9 @@ with c_right:
     st.markdown(
         """**Background:** M. Sc. Computer Science & Marketing Expert
 
-**Github:** [CrazyTrain93](https://github.com/CrazyTrain93)"""
+**Github:** [CrazyTrain93](https://github.com/CrazyTrain93)
+
+**LinkedIn:** [S. Schlögl](https://www.linkedin.com/in/stefan-schloegl-003512299/)"""
     )
 
 ut.h_spacer(space)

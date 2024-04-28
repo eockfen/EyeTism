@@ -3,21 +3,20 @@ import utils as ut
 import pandas as pd
 import os
 import imageio.v3 as iio
+import image_processing as ip
+import matplotlib.pyplot as plt
 
-# load default style settings
+# setup vars, menu, style, and so on --------------------
+ut.init_vars()
 ut.default_style()
-
-# sidebar menu
 ut.create_menu()
 
 # variables & paths -----------------------------------------------------------
 # Path to the folder containing images
-path_images = "content/images"
-path_sal4asd = "content/Saliency4ASD/"
-path_sal_deepgaze = "content/sal_pred/DeepGazeIIE/"
-path_sal_sam_resnet = "content/sal_pred/sam_resnet/"
-path_objects = "content/object_dt/"
-path_individual_scanpaths = "content/individual/"
+path_images = os.path.join("content/images")
+path_sp = os.path.join("content", "scanpaths")
+path_sal_deepgaze = os.path.join("content", "sal_pred", "DeepGazeIIE")
+path_sal_sam_resnet = os.path.join("content", "sal_pred", "sam_resnet")
 
 
 # functions -------------------------------------------------------------------
@@ -74,30 +73,30 @@ st.divider()
 st.markdown("## About the Features")
 
 # Select an image
-col1, col2 = st.columns([.3, .7])
-with col1:
-    st.markdown("""For the selected image the following further details and
+col_TD, col_ASD = st.columns([0.3, 0.7])
+with col_TD:
+    st.markdown(
+        """For the selected image the following further details and
                 features are shown below:
 
 - individual gaze scanpaths
 - Heatmaps, for ASD & TD
 - detected objects & faces
-- saliency predictions""")
-
-    image_files = sorted(os.listdir(path_images), key=lambda x: int(x.split(".")[0]))
-    selected_image = st.selectbox(
-        "Select an image:", image_files, label_visibility="hidden"
+- saliency predictions"""
     )
 
-with col2:
-    img = iio.imread(os.path.join(path_images, selected_image))
+    image_files = sorted(os.listdir(path_images), key=lambda x: int(x.split(".")[0]))
+    show_image = st.selectbox("Select image:", image_files)
+    print(show_image)
+with col_ASD:
+    img = iio.imread(os.path.join(path_images, show_image))
     w, h = img.shape[1], img.shape[0]
     # Display the selected image
-    st.image(img, width=int(280*w/h))
+    st.image(img, width=int(287 * w / h))
 
 # scanpaths -------------------------------------
 ut.h_spacer(1)
-st.markdown("#### Scanpaths")
+st.markdown("### Scanpaths")
 st.write(
     """ The scanpaths contain information about where, how long, and how often
 the participant has looked during the 3-second period when the picture was
@@ -106,57 +105,105 @@ the pixels of the image, along with the duration of fixation in milliseconds,
 representing **fixation points**. The movement between two fixation points is
 called **saccades**. Along with these metrics, a multitude of features can be
 calculated, which are explained in detail in our
-[Github repository](https://github.com/eockfen/EyeTism)."""
+[Github repository](https://github.com/eockfen/EyeTism).
+
+Furthernore, it's important to note that the order of scanpaths does not
+correspond to the order of individual participants in the experiments. As a
+result, it is not feasible to attribute gaze patterns to specific individuals."""
 )
 
+with st.container(border=True):
+    # load df
+    df_TD = pd.read_csv(os.path.join(path_sp, "TD_" + show_image[:-4] + ".txt"))
+    df_TD.columns = map(str.strip, df_TD.columns)
+    df_TD.columns = map(str.lower, df_TD.columns)
+    df_TDi = df_TD[df_TD["idx"] == 0].index.tolist()
 
-st.write(
-    """
-    This section presents the aggregated scanpaths for the selected image. Each
-    row corresponds to the gaze behavior of a participant, with a '0' denoting
-    the initiation of a new gaze sequence. However, it's important to note
-    that the order of scanpaths does not correspond to the order of individual
-    participants in the experiments. As a result, it is not feasible to attribute
-    gaze patterns to specific individuals."""
-)
+    df_ASD = pd.read_csv(os.path.join(path_sp, "ASD_" + show_image[:-4] + ".txt"))
+    df_ASD.columns = map(str.strip, df_ASD.columns)
+    df_ASD.columns = map(str.lower, df_ASD.columns)
+    df_ASDi = df_ASD[df_ASD["idx"] == 0].index.tolist()
 
-with st.expander("Show Scanpaths"):
-
-    col1, col2 = st.columns(2)
-    with col1:
-        df_TD = pd.read_csv(
-            os.path.join(
-                path_sal4asd, "scanpaths", "TD_scanpath_" + selected_image[:-4] + ".txt"
-            )
+    col_TD, col_ASD = st.columns(2)
+    with col_TD:
+        st.markdown("#### TD")
+        td_list = st.selectbox(
+            "Select individual gaze scanpath:",
+            [f"Individual  {i}" for i in range(len(df_TDi))],
         )
-        st.markdown("<h2 style='text-align: center;'>TD</h2>", unsafe_allow_html=True)
-        st.dataframe(
-            df_TD.style.apply(
-                lambda row: [
-                    "background-color: yellow" if row["Idx"] == 0 else "" for _ in row
+        td_idx = int(td_list.split(" ")[-1])
+
+        col_df, col_sp = st.columns([0.35, 0.65])
+        with col_df:
+            # scanpath data
+            st.dataframe(
+                df_TD.iloc[df_TDi[td_idx]:df_TDi[td_idx + 1]][["x", "y", "duration"]],
+                hide_index=True,
+            )
+
+        with col_sp:
+            # create plt
+            fig_td = plt.figure(
+                figsize=(round(img.shape[1] * 0.01), round(img.shape[0] * 0.01)),
+                frameon=False,
+            )
+            ax = plt.gca()
+            ax.set_axis_off()
+            ax.imshow(img)
+
+            # add scanpath overlay
+            fig_td = ip.overlay_scanpath(
+                fig_td,
+                df_TD.iloc[df_TDi[td_idx]:df_TDi[td_idx + 1]][
+                    ["idx", "x", "y", "duration"]
                 ],
-                axis=1,
             )
+
+            # plot
+            st.pyplot(fig_td)
+
+    with col_ASD:
+        st.markdown("#### ASD")
+        asd_list = st.selectbox(
+            "Select individual gaze scanpath:",
+            [f"Individual  {i}" for i in range(len(df_ASDi))],
         )
-    with col2:
-        df_ASD = pd.read_csv(
-            os.path.join(
-                path_sal4asd, "scanpaths", "ASD_scanpath_" + selected_image[:-4] + ".txt"
-            )
-        )
-        st.markdown("<h2 style='text-align: center;'>ASD</h2>", unsafe_allow_html=True)
-        st.dataframe(
-            df_ASD.style.apply(
-                lambda row: [
-                    "background-color: yellow" if row["Idx"] == 0 else "" for _ in row
+        asd_idx = int(asd_list.split(" ")[-1])
+
+        col_df, col_sp = st.columns([0.35, 0.65])
+        with col_df:
+            # scanpath data
+            st.dataframe(
+                df_ASD.iloc[df_ASDi[asd_idx]:df_ASDi[asd_idx + 1]][
+                    ["x", "y", "duration"]
                 ],
-                axis=1,
+                hide_index=True,
             )
-        )
+
+        with col_sp:
+            # create plt
+            fig_asd = plt.figure(
+                figsize=(round(img.shape[1] * 0.01), round(img.shape[0] * 0.01)),
+                frameon=False,
+            )
+            ax = plt.gca()
+            ax.set_axis_off()
+            ax.imshow(img)
+
+            # add scanpath overlay
+            fig_asd = ip.overlay_scanpath(
+                fig_asd,
+                df_ASD.iloc[df_ASDi[asd_idx]:df_ASDi[asd_idx + 1]][
+                    ["idx", "x", "y", "duration"]
+                ],
+            )
+
+            # plot
+            st.pyplot(fig_asd)
 
 # heatmaps --------------------------------------
 ut.h_spacer(1)
-st.markdown("#### Heatmaps")
+st.markdown("### Visual Heatmaps")
 st.write(
     """From the resulting scanpaths for each patient class, the aggregated
 heatmaps can be obtained for this specific image.They provide an idea where
@@ -164,88 +211,22 @@ the gaze focuses during observation."""
 )
 
 # Display heatmaps
-with st.expander("Show Heatmaps"):
+with st.container(border=True):
 
-    col5, col6 = st.columns(2)
-    with col5:
-        st.markdown("<h2 style='text-align: center;'>TD</h2>", unsafe_allow_html=True)
-        st.image(
-            os.path.join(path_sal4asd, "TD_HeatMaps/" + selected_image[:-4] + "_h.png")
-        )
+    col_TD, col_ASD = st.columns(2)
+    with col_TD:
+        st.markdown("#### TD")
+        fig_hm_td = ip.create_heatmap(int(show_image.split(".")[0]))
+        st.pyplot(fig_hm_td)
 
-    with col6:
-        st.markdown("<h2 style='text-align: center;'>ASD</h2>", unsafe_allow_html=True)
-        st.image(
-            os.path.join(
-                path_sal4asd, "ASD_HeatMaps/" + selected_image[:-4] + "_h.png"
-            )
-        )
-
-# objects & faces -------------------------------
-ut.h_spacer(1)
-st.markdown("#### Object and Face recognition")
-st.write(
-    """Visual attention is drawn to various elements within images, such as
-expansive landscapes or highly concentrated objects like people, faces, animals,
-buildings, and everyday items. With
-[Mediapipe](https://developers.google.com/mediapipe/solutions/vision/object_detector),
-the objects can be attributed to the fixation points."""
-)
-
-with st.expander("Show images with object and face recognition"):
-    col7, col8_1, col8_2 = st.columns(3)
-    with col7:
-        st.markdown(
-            "<h4 style='text-align: center;'>Object Detection </h4>",
-            unsafe_allow_html=True,
-        )
-        st.image(os.path.join(path_objects, selected_image[:-4] + ".png"))
-
-    with col8_1:
-        st.markdown("<h4 style='text-align: center;'>TD</h4>", unsafe_allow_html=True)
-        td_folder = os.path.join(path_individual_scanpaths, "TD")
-        td_image_number = int(selected_image[:-4])
-        td_image_files = sorted(
-            [
-                file
-                for file in os.listdir(td_folder)
-                if file.startswith(f"td_{td_image_number:03}")
-            ]
-        )
-        td_scanpaths = [
-            f"Scanpath {i.split('_')[2][:-4]}" for i in td_image_files
-        ]  # Remove the '.png' extension
-        selected_td_image = st.selectbox("Select TD gaze sequence:", td_scanpaths)
-        st.image(
-            os.path.join(
-                td_folder, td_image_files[td_scanpaths.index(selected_td_image)]
-            )
-        )
-
-    with col8_2:
-        st.markdown("<h4 style='text-align: center;'>ASD</h4>", unsafe_allow_html=True)
-        asd_folder = os.path.join(path_individual_scanpaths, "ASD")
-        asd_image_number = int(selected_image[:-4])
-        asd_image_files = sorted(
-            [
-                file
-                for file in os.listdir(asd_folder)
-                if file.startswith(f"asd_{asd_image_number:03}")
-            ]
-        )
-        asd_scanpaths = [
-            f"Scanpath {i.split('_')[2][:-4]}" for i in asd_image_files
-        ]  # Remove the '.png' extension
-        selected_asd_image = st.selectbox("Select ASD gaze sequence:", asd_scanpaths)
-        st.image(
-            os.path.join(
-                asd_folder, asd_image_files[asd_scanpaths.index(selected_asd_image)]
-            )
-        )
+    with col_ASD:
+        st.markdown("#### ASD")
+        fig_hm_asd = ip.create_heatmap(int(show_image.split(".")[0]))
+        st.pyplot(fig_hm_asd)
 
 # saliency --------------------------------------
 ut.h_spacer(1)
-st.markdown("#### Saliency Predictions")
+st.markdown("### Saliency Predictions")
 st.write(
     """Images can also be feed to _Visual Attentive Models_, which try to predict
 the saliency of of the image contents, which usually are drawing the visual
@@ -258,30 +239,73 @@ available and tested in a standardized way, a selection is provided
 [here](https://saliency.tuebingen.ai/datasets.html)."""
 )
 
-with st.expander("Show Saliency Maps"):
-    col9, col10, col11 = st.columns(3)
+with st.container(border=True):
+    col_img, col_dg, col_sam = st.columns(3)
 
-    with col9:
-        st.markdown(
-            "<h4 style='text-align: center;'>Original Image</h4>",
-            unsafe_allow_html=True,
+    with col_img:
+        st.markdown("#### Original Image")
+        st.image(os.path.join(path_images, show_image))
+
+    with col_dg:
+        st.markdown("#### DeepGazeIIE")
+        st.image(os.path.join(path_sal_deepgaze, show_image))
+
+    with col_sam:
+        st.markdown("#### SAM ResNET")
+        st.image(os.path.join(path_sal_sam_resnet, show_image[:-4] + ".jpg"))
+
+# objects & faces -------------------------------
+ut.h_spacer(1)
+st.markdown("### Object and Face Recognition")
+st.write(
+    """Visual attention is drawn to various elements within images, such as
+expansive landscapes or highly concentrated objects like people, faces, animals,
+buildings, and everyday items. With
+[Mediapipe](https://developers.google.com/mediapipe/solutions/vision/object_detector),
+the objects can be attributed to the fixation points."""
+)
+
+with st.container(border=True):
+    col_obj, col_face = st.columns(2)
+    with col_obj:
+        st.markdown("#### Objects")
+
+        # create plt
+        fig_obj = plt.figure(
+            figsize=(round(img.shape[1] * 0.01), round(img.shape[0] * 0.01)),
+            frameon=False,
         )
-        st.image(os.path.join(path_images, selected_image))
+        ax = plt.gca()
+        ax.set_axis_off()
+        ax.imshow(img)
 
-    with col10:
-        st.markdown(
-            "<h4 style='text-align: center;'>DeepGazeIIe</h4>", unsafe_allow_html=True
+        # add scanpath overlay
+        fig_obj = ip.overlay_objects(
+            fig_obj, st.session_state.loaded_objects[int(show_image.split(".")[0])], lw=7, lbl=False
         )
-        st.image(os.path.join(path_sal_deepgaze, selected_image))
 
-    with col11:
-        st.markdown(
-            "<h4 style='text-align: center;'>SAM_ResNET</h4>", unsafe_allow_html=True
+        # plot
+        st.pyplot(fig_obj)
+
+    with col_face:
+        st.markdown("#### Faces")
+
+        # create plt
+        fig_fcs = plt.figure(
+            figsize=(round(img.shape[1] * 0.01), round(img.shape[0] * 0.01)),
+            frameon=False,
         )
-        st.image(
-            os.path.join(path_sal_sam_resnet, selected_image[:-4] + ".jpg")
-        )  # Adjust file extension to JPG
+        ax = plt.gca()
+        ax.set_axis_off()
+        ax.imshow(img)
 
+        # add scanpath overlay
+        fig_fcs = ip.overlay_faces(
+            fig_fcs, st.session_state.loaded_faces[int(show_image.split(".")[0])], lw=7
+        )
+
+        # plot
+        st.pyplot(fig_fcs)
 
 ut.h_spacer(1)
 st.markdown("---")
@@ -290,3 +314,7 @@ st.write(
 into our model. For a detailed description of our feature engineering, please
 see our [Github repository](https://github.com/eockfen/EyeTism)"""
 )
+
+# ------------------------------------------------------------
+if st.session_state.debug:
+    st.session_state

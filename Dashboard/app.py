@@ -73,7 +73,7 @@ with st.expander(
         st.write(
             """Track 2 involves classifying individuals as either having Autism
 Spectrum Disorder (ASD) or being typically developing (TD) based on
-their gaze patterns. 
+their gaze patterns.
 
 By this, learning the systematic VA patterns of
 children with ASD can help to identify those very early during the
@@ -91,10 +91,10 @@ left_co, cent_co = st.columns([3, 2])
 with left_co:
     st.write(
         """We would like to express our sincere appreciation to the Data Science
-Bootcamp team at neuefische GmbH for their invaluable support and guidance
-throughout our journey.
+team at [neuefische GmbH](https://neuefische.de) for their invaluable support
+and guidance throughout our journey.
 
-A special thank you goes to Lina Willing, Aljoscha Wilhelm, and Nico Steffen
+A special thank you goes to **Lina Willing**, **Aljoscha Wilhelm**, and **Nico Steffen**
 for their outstanding coaching and mentorship. We also extend our gratitude
 to all the other coaches who contributed their expertise and insights,
 enriching our learning experience. Your dedication and support have been

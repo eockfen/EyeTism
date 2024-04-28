@@ -5,6 +5,7 @@ import os
 import pandas as pd
 import functions as fct
 import imageio.v3 as iio
+import image_processing as ip
 
 # setup vars, menu, style, and so on --------------------
 ut.init_vars()
@@ -120,19 +121,12 @@ if go_analyse:
         )
         for i, img in enumerate(st.session_state.opt["images"]):
             # files
-            file_img = os.path.join("content", "stimuli", f"{img}.png")
+            file_img_sp = os.path.join(path_evaluation, f"{img}.png")
+            file_img = os.path.join("content", "images", f"{img}.png")
             file_img_sal = os.path.join(
                 "content", "sal_pred", "DeepGazeIIE", f"{img}.png"
             )
-            file_img_td_hm = os.path.join(
-                "..",
-                "data",
-                "Saliency4ASD",
-                "AdditionalData",
-                "TD_HeatMaps",
-                f"{img}_h.png",
-            )
-            file_img_sp = os.path.join(path_evaluation, f"{img}.png")
+            fig_img_td_hm = ip.create_heatmap(img)
 
             # fill tab
             with tabs[i]:
@@ -185,7 +179,7 @@ if go_analyse:
                     st.image(file_img_sal)
                 with c23:
                     st.caption("TD Heatmap")
-                    st.image(file_img_td_hm)
+                    st.pyplot(fig_img_td_hm)
 
     if st.session_state.debug:
         st.dataframe(df)

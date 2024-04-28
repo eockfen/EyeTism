@@ -7,8 +7,8 @@ import pandas as pd
 import streamlit as st
 import imageio.v3 as iio
 import matplotlib.pyplot as plt
-import matplotlib.patches as patches
 
+import image_processing as ip
 import features as feat
 
 
@@ -266,91 +266,27 @@ def save_scanpath_figs():
 
         # load image
         img = iio.imread(os.path.join("content", "images", f"{img_nr}.png"))
-        plt.figure(
-            figsize=(round(img.shape[1] * 0.02), round(img.shape[0] * 0.02)),
+        fig = plt.figure(
+            figsize=(round(img.shape[1] * 0.01), round(img.shape[0] * 0.01)),
             frameon=False,
         )
         ax = plt.gca()
         ax.set_axis_off()
         ax.imshow(img)
 
-        # add faces
-        faces = detected_faces[img_nr]
-        for face in faces:
-            left, top, w, h = face
-            rect = patches.Rectangle(
-                (left, top),
-                w,
-                h,
-                linewidth=2,
-                edgecolor="r",
-                facecolor="none",
-            )
-            ax.add_patch(rect)
-
-        # add objects
-        objects = detected_objects[img_nr]
-        for obj in objects:
-            # name & score
-            obj_name = obj["name"]
-            bbox_coords = obj["bbox"]
-
-            # add rectangle
-            rect = patches.Rectangle(
-                (bbox_coords[0], bbox_coords[1]),
-                bbox_coords[2],
-                bbox_coords[3],
-                linewidth=2,
-                edgecolor="orange",
-                facecolor="none",
-            )
-            ax.add_patch(rect)
-
-            # add label
-            txt_name = f"{obj_name}"
-            plt.text(
-                bbox_coords[0],
-                bbox_coords[1],
-                txt_name,
-                fontsize=6,
-                backgroundcolor="orange",
-                verticalalignment="top",
-            )
-
         # style
         plt.ylim(img.shape[0] - 1, 0)
         plt.xlim(0, img.shape[1] - 1)
         plt.tight_layout
 
+        # add faces
+        fig = ip.overlay_faces(fig, detected_faces[img_nr])
+
+        # add objects
+        fig = ip.overlay_objects(fig, detected_objects[img_nr])
+
         # add saccades
-        for r in range(1, sp.shape[0]):
-            plt.plot(
-                [sp.loc[sp["idx"] == r - 1]["x"], sp.loc[sp["idx"] == r]["x"]],
-                [sp.loc[sp["idx"] == r - 1]["y"], sp.loc[sp["idx"] == r]["y"]],
-                lw=6,
-                c="#2c94ea",
-            )
-
-        # add fixations for individual plot
-        s_min = 20
-        s_max = 100
-        sp["size"] = (sp["duration"] - np.min(sp["duration"])) / (
-            np.max(sp["duration"]) - np.min(sp["duration"])
-        ) * (s_max - s_min) + s_min
-        sp["size"] = sp["size"].astype(int)
-
-        for r in range(sp.shape[0]):
-            ms = sp.loc[sp["idx"] == r]["size"].values
-            plt.plot(
-                sp.loc[sp["idx"] == r]["x"],
-                sp.loc[sp["idx"] == r]["y"],
-                "o",
-                color="#2c94ea",
-                mec="w",
-                mew=1.5,
-                ms=ms[0],
-                alpha=0.8,
-            )
+        fig = ip.overlay_scanpath(fig, sp)
 
         # save plot
         plt.savefig(
