@@ -5,8 +5,15 @@
 
 This repository contains the work of the Capstone project "EyeTism - Eye Movement Based Autism Diagnostics", developed within the intensive _Data Science Bootcamp_ provided by [neuefische GmbH](https://neuefische.de). 
 
----- 
-[toc]
+# Table of contents
+
+* [Description](#description)
+* [Data source](#data-source)
+* [Roadmsp](#roadmap---from-data-to-final-models)
+* [Dashboard](#dashboard)
+* [Presentation](#presentation)
+* [Acknowledgements](#acknowledgements)
+* [Folder navigation](#folder-navigaton)
 
 # Description
 
