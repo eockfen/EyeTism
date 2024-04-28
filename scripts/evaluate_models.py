@@ -459,13 +459,13 @@ def error_compare_models(inp, y_test, proba: bool = True):
                 path_up = os.path.join(path_up, "..")
 
             path_img = os.path.join(
-                    path_up,
-                    "data",
-                    "Saliency4ASD",
-                    "TrainingData",
-                    "Images",
-                    f"{int(img)}.png",
-                )
+                path_up,
+                "data",
+                "Saliency4ASD",
+                "TrainingData",
+                "Images",
+                f"{int(img)}.png",
+            )
             if os.path.exists(path_img):
                 loaded_img = iio.imread(path_img)
                 break
@@ -500,7 +500,9 @@ def error_compare_models(inp, y_test, proba: bool = True):
                 ax=axarr[ix],
             )
             axarr[ix].set_xlim(0, 1)
-            axarr[ix].set(ylabel="", xlabel=score, yticks=list(range(len(inp))), yticklabels=names)
+            axarr[ix].set(
+                ylabel="", xlabel=score, yticks=list(range(len(inp))), yticklabels=names
+            )
             if i > 0:
                 axarr[ix].set_yticklabels([])
 
@@ -508,7 +510,7 @@ def error_compare_models(inp, y_test, proba: bool = True):
 
 
 # -----------------------------------------------------------------------------
-def error_images(y_test, pred_test, proba_test):
+def error_images(y_test, pred_test, proba_test, thresh=None):
     # ----- prepare df containing prediction results -----
     y = y_test.to_frame()
     y["img"] = [int(i.split("_")[1]) for i in y.index]
@@ -607,13 +609,13 @@ def error_images(y_test, pred_test, proba_test):
                 path_up = os.path.join(path_up, "..")
 
             path_img = os.path.join(
-                    path_up,
-                    "data",
-                    "Saliency4ASD",
-                    "TrainingData",
-                    "Images",
-                    f"{int(img)}.png",
-                )
+                path_up,
+                "data",
+                "Saliency4ASD",
+                "TrainingData",
+                "Images",
+                f"{int(img)}.png",
+            )
             if os.path.exists(path_img):
                 loaded_img = iio.imread(path_img)
                 break
@@ -662,7 +664,11 @@ def error_images(y_test, pred_test, proba_test):
         # 3) ----- probabilities -----
         if proba_test is not None:
             ix = np.unravel_index(n_cols * ii + 3, axarr.shape)
-            axarr[ix].vlines(0.5, -0.4, 1.4, colors="k")
+            if thresh is None:
+                axarr[ix].vlines(0.5, -0.4, 1.4, colors="k")
+            else:
+                axarr[ix].vlines(thresh[img], -0.4, 1.4, colors="k")
+
             sns.scatterplot(
                 data=img_df,
                 x="proba",
