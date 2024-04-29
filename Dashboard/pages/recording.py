@@ -20,19 +20,7 @@ rec_patient = st.selectbox(
     st.session_state.patient_list,
     label_visibility="collapsed",
 )
-
-# note ---------------------------------------------
-ut.h_spacer(height=3)
-st.empty().info(
-    """**PLEASE NOTE:**\n
-_in the **final product**, an eye tracking software would be
-implemented to capture actual eye movement data_\n
-_until then, we **simulate** a data acquisition process by showing the actual
-sequence of pictures and overlaying it with eye gaze data_\n
-_the displayed **gaze fixation point** as well as the **scanpath** will not be
-visible to the patient in the real-world-recording situation_"""
-)
-ut.h_spacer(height=3)
+ut.h_spacer(height=2)
 
 # record  ---------------------------------------------
 st.subheader("Start Recording")
@@ -43,39 +31,53 @@ st.radio(
     options=["Typical Developed", "ASD"],
     horizontal=True,
     label_visibility="visible",
-    key="record_example"
+    key="record_example",
 )
 
-# load video -----
-if st.session_state.record_example == "ASD":
-    video_file = open(os.path.join("content", "videos", "asd.mp4"), "rb")
-else:
-    video_file = open(os.path.join("content", "videos", "td.mp4"), "rb")
+col_rec, col_note = st.columns([0.7, 0.3])
+with col_rec:
+    # load video -----
+    if st.session_state.record_example == "ASD":
+        video_file = open(os.path.join("content", "videos", "asd.mp4"), "rb")
+    else:
+        video_file = open(os.path.join("content", "videos", "td.mp4"), "rb")
 
-# play the video -----
-video_bytes = video_file.read()
-st.video(video_bytes)
+    # play the video -----
+    video_bytes = video_file.read()
+    st.video(video_bytes)
 
-# save recording ---------------------------------------------
-# button -----
-saved = st.button(
-    "Save Recording",
-    on_click=fct.save_recording,
-    args=(
-        rec_patient,
-        st.session_state.record_example,
-    ),
-)
-
-# feedback
-container_saved = st.empty()
-if saved:
-    container_saved.success(
-        f"Recording saved successfully in '{st.session_state.last_saved_recording}'."
+    # save recording ---------------------------------------------
+    # button -----
+    saved = st.button(
+        "Save Recording",
+        on_click=fct.save_recording,
+        args=(
+            rec_patient,
+            st.session_state.record_example,
+        ),
     )
-    # update DB_records & session.state
-    fct.update_rec_DB()
-    st.session_state.last_saved_recording = None
+
+    # feedback
+    container_saved = st.empty()
+    if saved:
+        container_saved.success(
+            f"Recording saved successfully in '{st.session_state.last_saved_recording}'."
+        )
+        # update DB_records & session.state
+        fct.update_rec_DB()
+        st.session_state.last_saved_recording = None
+
+# note ---------------------------------------------
+with col_note:
+    st.empty().info(
+        """**PLEASE NOTE:**\n
+_in the **final product**, an eye tracking software would be
+implemented to capture actual eye movement data_\n
+_until then, we **simulate** a data acquisition process by showing the actual
+sequence of pictures and overlaying it with (real) eye gaze data_\n
+_the displayed **gaze fixation point** as well as the **scanpath** will not be
+visible to the patient in the real-world-recording situation_"""
+    )
 
 # ------------------------------------------------------------
 if st.session_state.debug:
