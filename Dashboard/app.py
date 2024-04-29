@@ -1,3 +1,4 @@
+import os
 import streamlit as st
 import utils as ut
 
@@ -44,7 +45,7 @@ with st.expander(
 ):
     left_co, right_co = st.columns([2, 3])
     with right_co:
-        st.image("content/Track1.png", width=300)
+        st.image(os.path.join("content", "Track1.png"), width=300)
 
     with left_co:
         st.write(
@@ -67,7 +68,7 @@ with st.expander(
 ):
     left_co, right_co = st.columns([2, 3])
     with right_co:
-        st.image("content/Track2.png", width=400)
+        st.image(os.path.join("content", "Track2.png"), width=400)
 
     with left_co:
         st.write(
@@ -102,4 +103,4 @@ instrumental in our growth and success."""
     )
 
 with cent_co:
-    st.image("content/neuefische.png", width=400)
+    st.image(os.path.join("content", "neuefische.png"), width=400)
