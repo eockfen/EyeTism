@@ -11,7 +11,7 @@ dependencies:
   - lightgbm=4.3.0
   - matplotlib=3.8.3
   - numpy=1.26.4
-  - opencv=4.9.0.80
+  - opencv=4.9.0
   - pandas=2.2.1
   - pip
   - python=3.11.3
