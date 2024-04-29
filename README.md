@@ -194,7 +194,7 @@ To delve into its workings, you have two options:
   - this method allows you to explore the tool's capabilities firsthand, right from the comfort of your own machine
 - Online Access:
   - Prefer a hassle-free experience? Look no further! 
-  - Simply follow [this link](...) to access the application online.
+  - Simply follow [this link](https://eyetism.streamlit.app) to access the application online.
 
 Whichever route you choose, we hope this demonstration offers valuable insights into the potential of diagnostic tools and inspires further exploration in the realm of data-driven solutions.
 
