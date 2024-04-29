@@ -1,11 +1,11 @@
-import streamlit as st
-import utils as ut
-import time
 import os
+import time
 import pandas as pd
-import functions as fct
+import streamlit as st
 import imageio.v3 as iio
-import image_processing as ip
+from scripts import utils as ut
+from scripts import functions as fct
+from scripts import image_processing as ip
 
 # setup vars, menu, style, and so on --------------------
 ut.init_vars()
@@ -126,7 +126,7 @@ if go_analyse:
             file_img_sal = os.path.join(
                 "content", "sal_pred", "DeepGazeIIE", f"{img}.png"
             )
-            fig_img_td_hm = ip.create_heatmap(img)
+            fig_img_td_hm = ip.create_heatmap(img, who="TD")
 
             # fill tab
             with tabs[i]:
@@ -179,7 +179,7 @@ if go_analyse:
                     st.image(file_img_sal)
                 with c23:
                     st.caption("TD Heatmap")
-                    st.pyplot(fig_img_td_hm)
+                    st.image(fig_img_td_hm, channels="BGR")
 
     if st.session_state.debug:
         st.dataframe(df)

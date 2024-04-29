@@ -1,10 +1,10 @@
-import streamlit as st
-import utils as ut
-import pandas as pd
 import os
+import pandas as pd
+import streamlit as st
 import imageio.v3 as iio
-import image_processing as ip
 import matplotlib.pyplot as plt
+from scripts import utils as ut
+from scripts import image_processing as ip
 
 # setup vars, menu, style, and so on --------------------
 ut.init_vars()
@@ -87,7 +87,6 @@ with col_TD:
 
     image_files = sorted(os.listdir(path_images), key=lambda x: int(x.split(".")[0]))
     show_image = st.selectbox("Select image:", image_files)
-    print(show_image)
 with col_ASD:
     img = iio.imread(os.path.join(path_images, show_image))
     w, h = img.shape[1], img.shape[0]

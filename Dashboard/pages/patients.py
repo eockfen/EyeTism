@@ -1,7 +1,7 @@
-import streamlit as st
-import utils as ut
 import time
-import functions as fct
+import streamlit as st
+from scripts import utils as ut
+from scripts import functions as fct
 
 # setup vars, menu, style, and so on --------------------
 ut.init_vars()

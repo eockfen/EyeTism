@@ -1,10 +1,9 @@
-import streamlit as st
-import pandas as pd
-import glob
 import os
-import datetime
-import utils as ut
+import glob
 import pickle
+import datetime
+import pandas as pd
+import streamlit as st
 
 
 # initialize session_state variabled ------------------------------------------
@@ -64,7 +63,7 @@ def init_vars():
             recs = sorted(
                 [
                     f.split("/")[1].split(f"id-{id}_")[1]
-                    for f in glob.glob("recordings/*.csv")
+                    for f in glob.glob(os.path.join("recordings", "*.csv"))
                     if "/id-" + str(id) + "_" in f
                 ]
             )
@@ -102,35 +101,44 @@ def init_vars():
         }
 
     if "loaded_faces" not in st.session_state:
-        print('load face')
         st.session_state.loaded_faces = pickle.load(
-           open(os.path.join("models", "objects_faces", "faces.pickle"), "rb")
+            open(
+                os.path.join("models", "objects_faces", "faces.pickle"),
+                "rb",
+            )
         )
 
     if "loaded_objects" not in st.session_state:
-        print('load objects')
         st.session_state.loaded_objects = pickle.load(
-           open(os.path.join("models", "objects_faces", "objects.pickle"), "rb")
+            open(
+                os.path.join("models", "objects_faces", "objects.pickle"),
+                "rb",
+            )
         )
 
 
 # ------------------------------------------
 def create_menu():
     # sidebar menu
-    st.sidebar.image("content/Logo_wide.png", width=200, use_column_width="never")
+    st.sidebar.image(
+        os.path.join("content", "Logo_wide.png"),
+        width=200,
+        use_column_width="never",
+    )
     st.sidebar.page_link("app.py", label="Capstone Project")
-    st.sidebar.page_link("pages/about_ASD.py", label="About ASD")
-    st.sidebar.page_link("pages/dataset_features.py", label="Dataset & Features")
-    st.sidebar.page_link("pages/models.py", label="Models")
-    st.sidebar.page_link("pages/about_us.py", label="About Us")
+    st.sidebar.page_link(os.path.join("pages", "about_ASD.py"), label="About ASD")
+    st.sidebar.page_link(
+        os.path.join("pages", "dataset_features.py"),
+        label="Dataset & Features",
+    )
+    st.sidebar.page_link(os.path.join("pages", "models.py"), label="Models")
+    st.sidebar.page_link(os.path.join("pages", "about_us.py"), label="About Us")
     st.sidebar.markdown("---")
     st.sidebar.markdown("# Diagnostics")
-    st.sidebar.page_link("pages/patients.py", label="Patients")
-    st.sidebar.page_link("pages/recording.py", label="Record")
-    st.sidebar.page_link("pages/evaluate.py", label="Evaluate")
+    st.sidebar.page_link(os.path.join("pages", "patients.py"), label="Patients")
+    st.sidebar.page_link(os.path.join("pages", "recording.py"), label="Record")
+    st.sidebar.page_link(os.path.join("pages", "evaluate.py"), label="Evaluate")
     st.sidebar.markdown("---")
-    ut.h_spacer(7, sb=True)
-    # st.session_state.debug = st.sidebar.checkbox(label="show debug info", value=False)
 
 
 # ------------------------------------------

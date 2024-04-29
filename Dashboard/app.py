@@ -1,5 +1,6 @@
+import os
 import streamlit as st
-import utils as ut
+from scripts import utils as ut
 
 # setup vars, menu, style, and so on --------------------
 st.set_page_config(layout="wide")  # need to be first 'st' command !!!
@@ -8,7 +9,7 @@ ut.default_style()
 ut.create_menu()
 
 # home --------------------------------------------------
-st.image("content/Logo_Eyetism.png", use_column_width="auto")
+st.image(os.path.join("content", "Logo_Eyetism.png"), use_column_width="auto")
 st.text("")
 st.write(
     """Welcome to our dashboard. This site displays the results of our Capstone
@@ -44,7 +45,7 @@ with st.expander(
 ):
     left_co, right_co = st.columns([2, 3])
     with right_co:
-        st.image("content/Track1.png", width=300)
+        st.image(os.path.join("content", "Track1.png"), width=300)
 
     with left_co:
         st.write(
@@ -67,7 +68,7 @@ with st.expander(
 ):
     left_co, right_co = st.columns([2, 3])
     with right_co:
-        st.image("content/Track2.png", width=400)
+        st.image(os.path.join("content", "Track2.png"), width=400)
 
     with left_co:
         st.write(
@@ -102,4 +103,4 @@ instrumental in our growth and success."""
     )
 
 with cent_co:
-    st.image("content/neuefische.png", width=400)
+    st.image(os.path.join("content", "neuefische.png"), width=400)

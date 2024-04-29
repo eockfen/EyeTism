@@ -2,14 +2,13 @@ import os
 import pickle
 import datetime
 import numpy as np
-import utils as ut
 import pandas as pd
 import streamlit as st
 import imageio.v3 as iio
 import matplotlib.pyplot as plt
-
-import image_processing as ip
-import features as feat
+from scripts import utils as ut
+from scripts import features as feat
+from scripts import image_processing as ip
 
 
 # -----------------------------------------------------------------------------
@@ -82,12 +81,9 @@ def del_patient(x):
 def example_load_scanpath(kind: str, img: int, sp_idx: int) -> list:
     # path to scanpath file
     sp_path = os.path.join(
-        "..",
-        "data",
-        "Saliency4ASD",
-        "TrainingData",
-        kind,
-        f"{kind}_scanpath_{img}.txt",
+        "content",
+        "scanpaths",
+        f"{kind}_{img}.txt",
     )
 
     # read scanpat*.txt file
@@ -172,9 +168,6 @@ def extract_features():
     rec_date = ut.ugly_date(st.session_state.eval_meas)
     csv_file = os.path.join("recordings", f"id-{id}_{rec_date}.csv")
 
-    # curdir = os.path.dirname(__file__)
-    # csv_file = os.path.join(curdir, "recordings", "id-1_2024-01-08_17-22-45.csv")
-
     # extract features
     df = feat.scanpath(csv_file)
     df_sal = feat.saliency(csv_file)
@@ -189,9 +182,7 @@ def extract_features():
 def clean_features(df):
     # set id as index
     df = df.set_index("img", drop=True)
-    df = df.drop(
-        columns=[col for col in df.columns if "_obj" in col]
-    )  # drop 'object' columns
+    df = df.drop(columns=[col for col in df.columns if "_obj" in col])
     df = df[df["sp_fix_duration_ms_total"] <= 5000]
 
     return df

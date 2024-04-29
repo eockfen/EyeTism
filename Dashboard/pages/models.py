@@ -1,5 +1,5 @@
 import streamlit as st
-import utils as ut
+from scripts import utils as ut
 
 
 # load default style settings
