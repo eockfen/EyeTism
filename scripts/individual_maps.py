@@ -40,7 +40,7 @@ def individual_maps(path_im, sal_mdl: str = "dg"):
     # loop sp files
     for sp_file_ASD in tqdm(sp_files):
         # corresponding TD sp_file
-        sp_file_TD = sp_file_ASD.replace("ASD/ASD_", "TD/TD_")
+        sp_file_TD = sp_file_ASD.replace("ASD" + os.sep + "ASD_", "TD" + os.sep + "TD_")
         sp_file = [sp_file_ASD, sp_file_TD]
 
         # get size of image
@@ -85,7 +85,7 @@ def individual_maps(path_im, sal_mdl: str = "dg"):
     # loop sp files
     for sp_file_ASD in tqdm(sp_files):
         # corresponding TD sp_file
-        sp_file_TD = sp_file_ASD.replace("ASD/ASD_", "TD/TD_")
+        sp_file_TD = sp_file_ASD.replace("ASD" + os.sep + "ASD_", "TD" + os.sep + "TD_")
         sp_file = [sp_file_ASD, sp_file_TD]
 
         # get size of image

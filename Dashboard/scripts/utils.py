@@ -80,9 +80,9 @@ def init_vars():
             id = p.split(":")[0]
             recs = sorted(
                 [
-                    f.split("/")[1].split(f"id-{id}_")[1]
+                    f.split(os.sep)[1].split(f"id-{id}_")[1]
                     for f in glob.glob(os.path.join("recordings", "*.csv"))
-                    if "/id-" + str(id) + "_" in f
+                    if os.sep + "id-" + str(id) + "_" in f
                 ]
             )
             recs_nice = [nice_date(f) for f in recs]

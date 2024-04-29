@@ -44,7 +44,7 @@ def calculate_sp_features(sp_file: str) -> pd.DataFrame:
         df_sp = pd.DataFrame(pd.Series(id), columns=["id"])
 
         # instance identifiers
-        df_sp["asd"] = 1 if "ASD" in sp_file.split("/")[-2] else 0
+        df_sp["asd"] = 1 if "ASD" in sp_file.split(os.sep)[-2] else 0
         df_sp["img"] = int(sp_file.split("_")[-1].split(".")[0])
         df_sp["sp_idx"] = sp_i
 
@@ -458,7 +458,7 @@ def process_detections(detections, img_file, output, path_obj_recog):
     }
 
     # current image number
-    img_nr = int(img_file.split("/")[-1].split(".")[0])
+    img_nr = int(img_file.split(os.sep)[-1].split(".")[0])
 
     # handle RENAMINGS of detections
     if img_nr in switch.keys():
