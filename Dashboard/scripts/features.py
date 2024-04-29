@@ -23,7 +23,7 @@ def scanpath(rec_file: str) -> pd.DataFrame:
         df_sp = pd.DataFrame(pd.Series(img), columns=["img"])
 
         # get size of image
-        img_file = os.path.join(curdir, "content", "images", f"{img}.png")
+        img_file = os.path.join(curdir, "..", "content", "images", f"{img}.png")
         image_size = iio.imread(img_file).shape
 
         # fix count
@@ -70,7 +70,7 @@ def scanpath(rec_file: str) -> pd.DataFrame:
 # region SALIENCY -------------------------------------------------
 def saliency(rec_file: str) -> pd.DataFrame:
     curdir = os.path.dirname(__file__)
-    path_smaps = os.path.join(curdir, "content", "sal_pred")
+    path_smaps = os.path.join(curdir, "..", "content", "sal_pred")
     sal_dict = {"sam_resnet": "sam_", "DeepGazeIIE": "dg_"}
 
     # instantiate df
@@ -206,10 +206,10 @@ def objects(rec_file: str) -> pd.DataFrame:
 
     # load precalculated faces & objects
     detected_faces = pickle.load(
-        open(os.path.join(curdir, "models", "objects_faces", "faces.pickle"), "rb")
+        open(os.path.join(curdir, "..", "models", "objects_faces", "faces.pickle"), "rb")
     )
     detected_objects = pickle.load(
-        open(os.path.join(curdir, "models", "objects_faces", "objects.pickle"), "rb")
+        open(os.path.join(curdir, "..", "models", "objects_faces", "objects.pickle"), "rb")
     )
 
     # loop scanpaths

@@ -8,7 +8,6 @@ ut.default_style()
 ut.create_menu()
 
 # vars
-pic_width = 250
 space = 2
 
 # page -------------------
@@ -16,9 +15,9 @@ st.title("About us")
 st.markdown("---")
 
 st.subheader("Elena Ockfen")
-c_left, c_right = st.columns([1, 3])
+c_left, c_right = st.columns([1, 4])
 with c_left:
-    st.image(image="content/us/EO.jpg", width=pic_width)
+    st.image(image="content/us/EO.jpg", use_column_width="auto")
 with c_right:
     st.markdown(
         """**Background:** Biologist (Immune-Oncology)
@@ -30,9 +29,9 @@ with c_right:
 
 ut.h_spacer(space)
 st.subheader("Mariano Santoro")
-c_left, c_right = st.columns([1, 3])
+c_left, c_right = st.columns([1, 4])
 with c_left:
-    st.image(image="content/us/MS.png", width=pic_width)
+    st.image(image="content/us/MS.png", use_column_width="auto")
 with c_right:
     st.markdown(
         """**Background:** Biologist (Microbiology)
@@ -46,9 +45,9 @@ with c_right:
 
 ut.h_spacer(space)
 st.subheader("Stefan Schlögl")
-c_left, c_right = st.columns([1, 3])
+c_left, c_right = st.columns([1, 4])
 with c_left:
-    st.image(image="content/us/SS.png", width=pic_width)
+    st.image(image="content/us/SS.png", use_column_width="auto")
 with c_right:
     st.markdown(
         """**Background:** M. Sc. Computer Science & Marketing Expert
@@ -60,9 +59,9 @@ with c_right:
 
 ut.h_spacer(space)
 st.subheader("Dennis Dombrovskij")
-c_left, c_right = st.columns([1, 3])
+c_left, c_right = st.columns([1, 4])
 with c_left:
-    st.image(image="content/us/DD.png", width=pic_width)
+    st.image(image="content/us/DD.png", use_column_width="auto")
 with c_right:
     st.markdown(
         """**Background:** Biologist (Molecular Biology)
@@ -72,9 +71,9 @@ with c_right:
 
 ut.h_spacer(space)
 st.subheader("Dr. Adam Zabicki")
-c_left, c_right = st.columns([1, 3])
+c_left, c_right = st.columns([1, 4])
 with c_left:
-    st.image(image="content/us/AZ.jpg", width=pic_width)
+    st.image(image="content/us/AZ.jpg", use_column_width="auto")
 with c_right:
     st.markdown(
         """**Background:** Neuroscience, Movement Science, Physics
