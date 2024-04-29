@@ -53,12 +53,22 @@ cd EyeTism
 conda env create -f environment.yml
 ```
 
-- or via _venv_
+- or via _venv_ on Unix
 
 ```terminal
 pyenv local 3.11.3
 python -m venv .venv
 source .venv/bin/activate
+pip install --upgrade pip
+pip install -r requirements.txt 
+```
+
+- or via _venv_ on Windows
+
+```terminal
+pyenv local 3.11.3
+python -m venv .venv
+source .venv/Scripts/activate
 pip install --upgrade pip
 pip install -r requirements.txt 
 ```

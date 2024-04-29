@@ -13,7 +13,7 @@ ut.create_menu()
 
 # variables & paths -----------------------------------------------------------
 # Path to the folder containing images
-path_images = os.path.join("content/images")
+path_images = os.path.join("content", "images")
 path_sp = os.path.join("content", "scanpaths")
 path_sal_deepgaze = os.path.join("content", "sal_pred", "DeepGazeIIE")
 path_sal_sam_resnet = os.path.join("content", "sal_pred", "sam_resnet")

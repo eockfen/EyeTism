@@ -305,5 +305,11 @@ for img in tqdm(range(1, 301)):
         fcs.append([left, top, right - left, bottom - top])
     faces[img] = fcs
 
-pickle.dump(faces, open("Dashboard/models/faces2.pickle", "wb"))
-pickle.dump(objects, open("Dashboard/models/objects2.pickle", "wb"))
+pickle.dump(
+    faces,
+    open(os.path.join("Dashboard", "models", "objects_faces", "faces.pickle"), "wb"),
+)
+pickle.dump(
+    objects,
+    open(os.path.join("Dashboard", "models", "objects_faces", "objects.pickle"), "wb"),
+)

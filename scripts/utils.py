@@ -22,7 +22,7 @@ def get_sp_id(sp_file: str, sp_i: int) -> str:
     Returns:
         str: unique scanpath_id
     """
-    grp = "asd" if "ASD" in sp_file.split("/")[-2] else "td"
+    grp = "asd" if "ASD" in sp_file.split(os.sep)[-2] else "td"
     img_id = int(sp_file.split("_")[-1].split(".")[0])
     return f"{grp}_{img_id:03.0f}_{sp_i:02.0f}"
 

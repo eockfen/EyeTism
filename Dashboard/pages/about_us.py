@@ -1,3 +1,4 @@
+import os
 import streamlit as st
 from scripts import utils as ut
 
@@ -17,7 +18,7 @@ st.markdown("---")
 st.subheader("Elena Ockfen")
 c_left, c_right = st.columns([1, 4])
 with c_left:
-    st.image(image="content/us/EO.jpg", use_column_width="auto")
+    st.image(image=os.path.join("content", "us", "EO.jpg"), use_column_width="auto")
 with c_right:
     st.markdown(
         """**Background:** Biologist (Immune-Oncology)
@@ -31,7 +32,7 @@ ut.h_spacer(space)
 st.subheader("Mariano Santoro")
 c_left, c_right = st.columns([1, 4])
 with c_left:
-    st.image(image="content/us/MS.png", use_column_width="auto")
+    st.image(image=os.path.join("content", "us", "MS.png"), use_column_width="auto")
 with c_right:
     st.markdown(
         """**Background:** Biologist (Microbiology)
@@ -47,7 +48,7 @@ ut.h_spacer(space)
 st.subheader("Stefan Schlögl")
 c_left, c_right = st.columns([1, 4])
 with c_left:
-    st.image(image="content/us/SS.png", use_column_width="auto")
+    st.image(image=os.path.join("content", "us", "SS.png"), use_column_width="auto")
 with c_right:
     st.markdown(
         """**Background:** M. Sc. Computer Science & Marketing Expert
@@ -61,7 +62,7 @@ ut.h_spacer(space)
 st.subheader("Dennis Dombrovskij")
 c_left, c_right = st.columns([1, 4])
 with c_left:
-    st.image(image="content/us/DD.png", use_column_width="auto")
+    st.image(image=os.path.join("content", "us", "DD.png"), use_column_width="auto")
 with c_right:
     st.markdown(
         """**Background:** Biologist (Molecular Biology)
@@ -73,7 +74,7 @@ ut.h_spacer(space)
 st.subheader("Dr. Adam Zabicki")
 c_left, c_right = st.columns([1, 4])
 with c_left:
-    st.image(image="content/us/AZ.jpg", use_column_width="auto")
+    st.image(image=os.path.join("content", "us", "AZ.jpg"), use_column_width="auto")
 with c_right:
     st.markdown(
         """**Background:** Neuroscience, Movement Science, Physics
