@@ -7,6 +7,7 @@ lightgbm==4.3.0
 matplotlib==3.8.3
 mediapipe==0.10.9
 numpy==1.26.4
+opencv-python==4.9.0.80
 pandas==2.2.1
 python==3.11.3
 pytorch==2.2.2
