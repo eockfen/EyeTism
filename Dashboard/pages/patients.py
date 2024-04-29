@@ -32,39 +32,46 @@ with tab1:
         },
     )
 
-# edit patients ---------------------------------------------
+# manage patients --------------------------------------------------------
 with tab2:
-    # edit patient entries -----------
+    # edit patient entries ---------------------------------
     st.subheader("Edit Patient Entries")
 
-    # show db
-    st.session_state.pat_db_update = st.data_editor(
-        st.session_state.pat_db[["id", "name", "age"]],
-        use_container_width=True,
-        hide_index=True,
-        disabled=["id", "n_rec", "last_rec"],
-        column_config={
-            "id": st.column_config.Column(label="id", width=1),
-            "name": st.column_config.TextColumn(
-                label="Name", width="large", max_chars=50, required=True
-            ),
-            "age": st.column_config.NumberColumn(
-                label="Age", width="medium", min_value=1, max_value=99, required=True
-            ),
-        },
-    )
+    with st.container(border=True):
+        # show db
+        st.session_state.pat_db_update = st.data_editor(
+            st.session_state.pat_db[["id", "name", "age"]],
+            use_container_width=False,
+            hide_index=True,
+            disabled=["id", "n_rec", "last_rec"],
+            column_config={
+                "id": st.column_config.Column(label="id", width=50),
+                "name": st.column_config.TextColumn(
+                    label="Name", width=250, max_chars=50, required=True
+                ),
+                "age": st.column_config.NumberColumn(
+                    label="Age", width="small", min_value=1, max_value=99, required=True
+                ),
+            },
+        )
 
-    # button
-    updated = st.button("Save Changes", on_click=fct.update_pat_DB)
+        # submit button
+        col_btn1, col_fdb1, _ = st.columns([1, 3, 4], gap="small")
+        with col_btn1:
+            submitted_updated = st.button("Save Changes", on_click=fct.update_pat_DB)
 
-    # feedback
-    container_update = st.empty()
-    if updated:
-        container_update.success("Database updated successfully.")
-        time.sleep(1)
-        container_update.empty()
+        # feedback
+        with col_fdb1:
+            container_edit = st.empty()
 
-    ut.h_spacer(5)
+        # handle submission
+        if submitted_updated:
+            if st.session_state.pat_db_update.shape[0] > 0:
+                st.session_state.flag_edit_ok = True
+            else:
+                st.session_state.flag_edit_err = True
+
+    ut.h_spacer(3)
 
     col_new, col_del = st.columns([1, 1], gap="medium")
     with col_new:
@@ -76,25 +83,27 @@ with tab2:
             name = st.text_input("Name:", value="", max_chars=50)
 
             # age
-            _, col_age, _ = st.columns([0.03, 0.5, 0.46], gap="small")
+            _, col_age, _ = st.columns([0.01, 0.8, 0.19], gap="small")
             with col_age:
                 age = st.slider("Age:", min_value=1, max_value=99)
 
             # submit button
-            submitted = st.form_submit_button("Save Patient")
+            col_btn2, col_fdb2 = st.columns([1, 3], gap="small")
+            with col_btn2:
+                submitted_add = st.form_submit_button("Save Patient")
+
+            # feedback
+            with col_fdb2:
+                container_add = st.empty()
 
             # handle submission
-            if submitted:
+            if submitted_add:
                 status = fct.add_pat(name, age)
-                container_add = st.empty()
                 if status:
-                    container_add.success("New patient saved successfully.")
-                    time.sleep(1)
-                    container_add.empty()
-                    st.rerun()
+                    st.session_state.flag_add_ok = True
                 else:
-                    container_add.error("... patient was not saved...")
-                    time.sleep(2)
+                    st.session_state.flag_add_err = True
+                st.rerun()
 
     with col_del:
         # delete patient entry ---------------------------------
@@ -108,17 +117,62 @@ with tab2:
             )
 
             # submit button
-            deleted = st.form_submit_button(
-                "Delete Patient", on_click=fct.del_patient, args=(sel_patient,)
-            )
+            col_btn3, col_fdb3 = st.columns([1, 3], gap="small")
+            with col_btn3:
+                # submitted_delete = st.form_submit_button(
+                #     "Delete Patient", on_click=fct.del_patient, args=(sel_patient,)
+                # )
+                submitted_delete = st.form_submit_button("Delete Patient")
 
-        # feedback
-        container_del = st.empty()
-        if deleted:
-            container_del.success("Patient deleted successfully.")
-            time.sleep(1)
-            container_del.empty()
+            # feedback
+            with col_fdb3:
+                container_del = st.empty()
 
+            # handle submission
+            if submitted_delete:
+                if st.session_state.patient_list != []:
+                    fct.del_patient(sel_patient)
+                    st.session_state.flag_del_ok = True
+                else:
+                    st.session_state.flag_del_err = True
+                st.rerun()
+
+    # display messages ---------------------------------
+    if st.session_state.flag_edit_ok:
+        st.session_state.flag_edit_ok = False
+        container_edit.success("Database updated successfully.")
+        time.sleep(2)
+        container_edit.empty()
+
+    if st.session_state.flag_edit_err:
+        st.session_state.flag_edit_err = False
+        container_edit.error("No Patients in Database.")
+        time.sleep(2)
+        container_edit.empty()
+
+    if st.session_state.flag_add_ok:
+        st.session_state.flag_add_ok = False
+        container_add.success("New patient saved successfully.")
+        time.sleep(2)
+        container_add.empty()
+
+    if st.session_state.flag_add_err:
+        st.session_state.flag_add_err = False
+        container_add.error("Please enter a 'Name'.")
+        time.sleep(2)
+        container_add.empty()
+
+    if st.session_state.flag_del_ok:
+        st.session_state.flag_del_ok = False
+        container_del.success("Patient deleted successfully.")
+        time.sleep(2)
+        container_del.empty()
+
+    if st.session_state.flag_del_err:
+        st.session_state.flag_del_err = False
+        container_del.error("No Patients in Database.")
+        time.sleep(2)
+        container_del.empty()
 
 # ------------------------------------------------------------
 if st.session_state.debug:

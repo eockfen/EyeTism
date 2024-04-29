@@ -55,6 +55,7 @@ with col_rec:
             rec_patient,
             st.session_state.record_example,
         ),
+        disabled=st.session_state.btn_rec_status,
     )
 
     # feedback
