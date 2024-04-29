@@ -9,7 +9,7 @@ ut.default_style()
 ut.create_menu()
 
 # home --------------------------------------------------
-st.image("content/Logo_Eyetism.png", use_column_width="auto")
+st.image(os.path.join("content", "Logo_Eyetism.png"), use_column_width="auto")
 st.text("")
 st.write(
     """Welcome to our dashboard. This site displays the results of our Capstone
