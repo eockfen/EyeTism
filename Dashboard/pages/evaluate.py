@@ -29,19 +29,21 @@ with col_name:
     )
 
 with col_recording:
+    recs = []
+    if st.session_state.eval_pat:
+        recs = st.session_state.rec_db[st.session_state.eval_pat][1]
     st.selectbox(
         "Evaluate_Measurement",
-        options=st.session_state.rec_db[st.session_state.eval_pat][1],
+        options=recs,
         label_visibility="collapsed",
         key="eval_meas",
     )
 
 with col_btn:
     go_analyse = False
-    if st.session_state.eval_meas:
-        go_analyse = st.button(
-            "Analyse",
-        )
+    go_analyse = st.button(
+        "Analyse", disabled=False if st.session_state.eval_meas else True
+    )
 
 # preogress bar
 prog_bar = st.progress(0, text="...")

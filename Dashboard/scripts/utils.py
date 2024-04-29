@@ -8,6 +8,9 @@ import streamlit as st
 
 # initialize session_state variabled ------------------------------------------
 def init_vars():
+    if "debug" not in st.session_state:
+        st.session_state.debug = False
+
     # fetch scanpath from images folder
     st.session_state.opt = {
         "images": [203, 47, 95, 96, 138, 166, 191, 253, 287],
@@ -41,6 +44,19 @@ def init_vars():
     if "edited_patient_db" not in st.session_state:
         st.session_state.pat_db_update = DB.copy()
 
+    if "flag_edit_ok" not in st.session_state:
+        st.session_state.flag_edit_ok = False
+    if "flag_edit_err" not in st.session_state:
+        st.session_state.flag_edit_err = False
+    if "flag_add_ok" not in st.session_state:
+        st.session_state.flag_add_ok = False
+    if "flag_add_err" not in st.session_state:
+        st.session_state.flag_add_err = False
+    if "flag_del_ok" not in st.session_state:
+        st.session_state.flag_del_ok = False
+    if "flag_del_err" not in st.session_state:
+        st.session_state.flag_del_err = False
+
     if "patient_list" not in st.session_state:
         st.session_state.patient_list = [
             f"{int(r['id'])}: {r['name']} (age: {int(r['age'])})"
@@ -50,11 +66,13 @@ def init_vars():
     if "record_example" not in st.session_state:
         st.session_state.record_example = "Typical Developed"
 
-    if "debug" not in st.session_state:
-        st.session_state.debug = False
-
     if "last_saved_recording" not in st.session_state:
         st.session_state.last_saved_recording = None
+
+    if "btn_rec_status" not in st.session_state:
+        st.session_state.btn_rec_status = (
+            True if st.session_state.patient_list == [] else False
+        )
 
     if "recordings_db" not in st.session_state:
         DB_REC = {}

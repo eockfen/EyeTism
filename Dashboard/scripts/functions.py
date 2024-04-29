@@ -23,7 +23,7 @@ def add_pat(name, age):
 
     # new patient
     new_pat = pd.DataFrame(
-        {"id": 1, "name": name, "age": int(age), "n_rec": 0, "last_rec": 0},
+        {"id": 1, "name": name, "age": int(age), "n_rec": 0, "last_rec": "---"},
         index=[0],
     )
 
@@ -48,27 +48,59 @@ def add_pat(name, age):
         f"{int(r['id'])}: {r['name']} (age: {int(r['age'])})"
         for (_, r) in st.session_state.pat_db.iterrows()
     ]
+    st.session_state.btn_rec_status = (
+        True if st.session_state.patient_list == [] else False
+    )
+
     return True
 
 
 def update_pat_DB():
-    print(st.session_state.pat_db_update)
-    # st.session_state.pat_db = st.session_state.pat_db_update
-    # st.session_state.pat_db.to_csv(os.path.join("db", "patients.csv"), index=False)
+    # loop through "edit" dataframe and save values into pat_db
+    for _, r in st.session_state.pat_db_update.iterrows():
+        st.session_state.pat_db.loc[
+            st.session_state.pat_db["id"] == r["id"], "name"
+        ] = r["name"]
+        st.session_state.pat_db.loc[st.session_state.pat_db["id"] == r["id"], "age"] = (
+            r["age"]
+        )
+
+    # update csv & session_state
+    st.session_state.pat_db.to_csv(os.path.join("db", "patients.csv"), index=False)
+    st.session_state.pat_db_update = st.session_state.pat_db
+    st.session_state.patient_list = [
+        f"{int(r['id'])}: {r['name']} (age: {int(r['age'])})"
+        for (_, r) in st.session_state.pat_db.iterrows()
+    ]
+    st.session_state.btn_rec_status = (
+        True if st.session_state.patient_list == [] else False
+    )
 
     return True
 
 
 def del_patient(x):
-    print(x)
-    del_id = int(x.split(":")[0])
-    del_idx = st.session_state.pat_db.id == del_id
-    st.session_state.pat_db = st.session_state.pat_db.loc[np.invert(del_idx), :]
+    # remove row from pat_db
+    del_idx = st.session_state.pat_db.id == int(x.split(":")[0])
+    st.session_state.pat_db = st.session_state.pat_db.loc[
+        np.invert(del_idx), :
+    ].reset_index(drop=True)
+
+    # delete also all recordings and evaluations
+
+    # update csv & session_state
     st.session_state.pat_db.to_csv(os.path.join("db", "patients.csv"), index=False)
+    st.session_state.pat_db_update = st.session_state.pat_db
+    st.session_state.patient_list = [
+        f"{int(r['id'])}: {r['name']} (age: {int(r['age'])})"
+        for (_, r) in st.session_state.pat_db.iterrows()
+    ]
+    st.session_state.btn_rec_status = (
+        True if st.session_state.patient_list == [] else False
+    )
 
     if st.session_state.debug:
-        print(" id to delete: " + str(del_id))
-        print(del_idx)
+        print(" idx to delete: " + str(del_idx))
         print(st.session_state.pat_db.loc[del_idx, :])
         print(st.session_state.pat_db.loc[np.invert(del_idx), :])
 
