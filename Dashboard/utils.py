@@ -102,13 +102,11 @@ def init_vars():
         }
 
     if "loaded_faces" not in st.session_state:
-        print('load face')
         st.session_state.loaded_faces = pickle.load(
            open(os.path.join("models", "objects_faces", "faces.pickle"), "rb")
         )
 
     if "loaded_objects" not in st.session_state:
-        print('load objects')
         st.session_state.loaded_objects = pickle.load(
            open(os.path.join("models", "objects_faces", "objects.pickle"), "rb")
         )
