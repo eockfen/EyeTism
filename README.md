@@ -9,7 +9,7 @@ This repository contains the work of the Capstone project "EyeTism - Eye Movemen
 
 * [Description](#description)
 * [Data source](#data-source)
-* [Roadmsp](#roadmap---from-data-to-final-models)
+* [Roadmap](#roadmap---from-data-to-final-models)
 * [Dashboard](#dashboard)
 * [Presentation](#presentation)
 * [Acknowledgements](#acknowledgements)
@@ -17,7 +17,7 @@ This repository contains the work of the Capstone project "EyeTism - Eye Movemen
 
 # Description
 
-Our "EyeTism" project focussed on the development of a tool for diagnosis of Autism Spectrum Disorder (ASD) in children within the age range of 8 - 15 years old. ASD is a developmental disability with effects on social interaction and learning. Hence, early diagnosis of affected children is crucial for child development. Although individuals with ASD often exhibit distinct gaze behavior compared to typically developing (TD), ASD detection still remains challenging. Our tool employs machine learning on eye tracking data from high-functioning ASD and TD children to build an integrative tool for pediatricians responsible for diagnosing ASD based on visual attention patterns of patients on a selected subset of images. 
+Our "EyeTism" project focused on the development of a tool for diagnosis of Autism Spectrum Disorder (ASD) in children within the age range of 8 - 15 years old. ASD is a developmental disability with effects on social interaction and learning. Hence, early diagnosis of affected children is crucial for child development. Although individuals with ASD often exhibit distinct gaze behavior compared to typically developing (TD), ASD detection still remains challenging. Our tool employs machine learning on eye tracking data from high-functioning ASD and TD children to build an integrative tool for pediatricians responsible for diagnosing ASD based on visual attention patterns of patients on a selected subset of images. 
 
 # Data source
 
