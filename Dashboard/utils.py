@@ -130,7 +130,7 @@ def create_menu():
     st.sidebar.page_link("pages/evaluate.py", label="Evaluate")
     st.sidebar.markdown("---")
     ut.h_spacer(7, sb=True)
-    st.session_state.debug = st.sidebar.checkbox(label="show debug info", value=False)
+    # st.session_state.debug = st.sidebar.checkbox(label="show debug info", value=False)
 
 
 # ------------------------------------------
