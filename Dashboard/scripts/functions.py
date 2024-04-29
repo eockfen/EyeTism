@@ -2,14 +2,13 @@ import os
 import pickle
 import datetime
 import numpy as np
-import utils as ut
 import pandas as pd
 import streamlit as st
 import imageio.v3 as iio
 import matplotlib.pyplot as plt
-
-import image_processing as ip
-import features as feat
+from scripts import utils as ut
+from scripts import features as feat
+from scripts import image_processing as ip
 
 
 # -----------------------------------------------------------------------------

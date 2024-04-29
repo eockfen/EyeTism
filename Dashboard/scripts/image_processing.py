@@ -1,11 +1,11 @@
 import os
+import cv2
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 from scipy import ndimage
 from skimage import exposure
-import cv2
 
 
 def overlay_scanpath(fig, sp):

@@ -1,11 +1,11 @@
-import streamlit as st
-import utils as ut
-import time
 import os
+import time
 import pandas as pd
-import functions as fct
+import streamlit as st
 import imageio.v3 as iio
-import image_processing as ip
+from scripts import utils as ut
+from scripts import functions as fct
+from scripts import image_processing as ip
 
 # setup vars, menu, style, and so on --------------------
 ut.init_vars()
