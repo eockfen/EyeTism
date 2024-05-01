@@ -7,6 +7,7 @@ lightgbm==4.3.0
 matplotlib==3.8.3
 mediapipe==0.10.9
 numpy==1.26.4
+xgboost==2.0.3
 opencv-python==4.9.0.80
 pandas==2.2.1
 scikit-image==0.22.0
@@ -17,4 +18,3 @@ tensorflow==2.16.1
 torch==2.2.2
 torchvision==0.17.2
 tqdm==4.66.2
-xgboost==2.0.3
