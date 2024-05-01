@@ -9,7 +9,7 @@ This repository contains the work of the Capstone project "EyeTism - Eye Movemen
 
 * [Description](#description)
 * [Data source](#data-source)
-* [Roadmsp](#roadmap---from-data-to-final-models)
+* [Roadmap](#roadmap---from-data-to-final-models)
 * [Dashboard](#dashboard)
 * [Presentation](#presentation)
 * [Acknowledgements](#acknowledgements)
@@ -17,7 +17,7 @@ This repository contains the work of the Capstone project "EyeTism - Eye Movemen
 
 # Description
 
-Our "EyeTism" project focussed on the development of a tool for diagnosis of Autism Spectrum Disorder (ASD) in children within the age range of 8 - 15 years old. ASD is a developmental disability with effects on social interaction and learning. Hence, early diagnosis of affected children is crucial for child development. Although individuals with ASD often exhibit distinct gaze behavior compared to typically developing (TD), ASD detection still remains challenging. Our tool employs machine learning on eye tracking data from high-functioning ASD and TD children to build an integrative tool for pediatricians responsible for diagnosing ASD based on visual attention patterns of patients on a selected subset of images. 
+Our "EyeTism" project focused on the development of a tool for diagnosis of Autism Spectrum Disorder (ASD) in children within the age range of 8 - 15 years old. ASD is a developmental disability with effects on social interaction and learning. Hence, early diagnosis of affected children is crucial for child development. Although individuals with ASD often exhibit distinct gaze behavior compared to typically developing (TD), ASD detection still remains challenging. Our tool employs machine learning on eye tracking data from high-functioning ASD and TD children to build an integrative tool for pediatricians responsible for diagnosing ASD based on visual attention patterns of patients on a selected subset of images. 
 
 # Data source
 
@@ -46,32 +46,17 @@ cd EyeTism
 ### 1. Python Environment 
 
 - Open the terminal
-
-- Depending on how you manage your virtual environments, either install it via _conda_
-
-```terminal
-conda env create -f environment.yml
-```
-
-- or via _venv_ on Unix
-
-```terminal
-pyenv local 3.11.3
-python -m venv .venv
-source .venv/bin/activate
-pip install --upgrade pip
-pip install -r requirements.txt 
-```
-
-- or via _venv_ on Windows
-
-```terminal
-pyenv local 3.11.3
-python -m venv .venv
-source .venv/Scripts/activate
-pip install --upgrade pip
-pip install -r requirements.txt 
-```
+- Create a virtual environmant with the tool of your choice
+- Install `Python 3.11.3`
+- Depending on how you manage your virtual environments, either install the all dependencies
+  - via _conda_:
+    - `conda env create -f environment.yml`
+  - or via _pip_:
+    - `pip install -r requirements.txt`
+- important notes:
+  - to install `dlib` you need to have CMake and a working C++ compiler installed
+  - in case your are on a Mac and run into Problems while pip-installing `lightgbm`, it could be that `brew install libomp` [see here](https://github.com/microsoft/LightGBM/issues/6035) helps
+  - 
 
 ### 2. Extract data from .zip files
 
@@ -113,7 +98,7 @@ python prepare_saliency_maps.py dg
 
 - Check out and run the `extract_features.iypnb` notebook in the `/notebooks` folder.
 
-- Extracted features will be saved in `/data/df_deep_sam.csv` file. This process can approximately take two hours.
+- Extracted features will be saved in `/data/df_deep_sam.csv` file. This process can approximately take a few hours, depending on your machine.
 
 After running the notebook, three outputs are generated:
 
@@ -190,11 +175,11 @@ To delve into its workings, you have two options:
 - Local Installation: 
   - cloning this repository onto your system
   - next, establish a virtual environment to ensure a clean and isolated setup
-  - finally, initiate the dashboard by executing the command `streamlit run /Dashboard/app.py` within your terminal
+  - finally, initiate the dashboard by `cd Dashboard` and executing the command `streamlit run app.py` within your terminal
   - this method allows you to explore the tool's capabilities firsthand, right from the comfort of your own machine
 - Online Access:
   - Prefer a hassle-free experience? Look no further! 
-  - Simply follow [this link](...) to access the application online.
+  - Simply visit [**EyeTism**](https://eyetism.streamlit.app) to access the application online.
 
 Whichever route you choose, we hope this demonstration offers valuable insights into the potential of diagnostic tools and inspires further exploration in the realm of data-driven solutions.
 
