@@ -56,7 +56,6 @@ cd EyeTism
 - important notes:
   - to install `dlib` you need to have CMake and a working C++ compiler installed
   - in case your are on a Mac and run into Problems while pip-installing `lightgbm`, it could be that `brew install libomp` [see here](https://github.com/microsoft/LightGBM/issues/6035) helps
-  - 
 
 ### 2. Extract data from .zip files
 
@@ -99,6 +98,8 @@ python prepare_saliency_maps.py dg
 - Check out and run the `extract_features.iypnb` notebook in the `/notebooks` folder.
 
 - Extracted features will be saved in `/data/df_deep_sam.csv` file. This process can approximately take a few hours, depending on your machine.
+
+- If you are as inpatient as me and don't want to waste precious time waiting for our "slow) script to calculate all the features, you can download the [df_deep_sam.csv](https://github.com/eockfen/EyeTism/releases/download/v0.1.0/df_deep_sam.csv) and store it in the `/data` folder
 
 After running the notebook, three outputs are generated:
 
